@@ -1681,7 +1681,7 @@ function saveEditCategory(i) {
   }
 
   // ─── KDP REFRESH ─────────────────────────────────────────────────────────────
-  const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbvX3UT_Uslq0hpplSv_cW_9Re4q3NMb0.../exec";
+  const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzyQTdFyhwPW9wD9bjwg5frF--Kmap9yk-Nehxhbx4vDgbip490lqfcmwPKmLbq2Pj3/exec";
 const APPSSCRIPTURL = APPS_SCRIPT_URL; // ← incolla qui il tuo Google Apps Script Web App URL
 
   async function fetchKdpFromSheets() {
@@ -1775,9 +1775,8 @@ const APPSSCRIPTURL = APPS_SCRIPT_URL; // ← incolla qui il tuo Google Apps Scr
   initKdpRefresh();
 
   // Carica da Google Sheets all'avvio
-  // sheetsLoad all'avvio disabilitato — ricollegare in seguito
 const statusEl = document.getElementById('sheets-status');
-if (statusEl) statusEl.textContent = 'Offline — dati locali';
+fetchKdpFromSheets();
 renderCategoryDatalist();
 autoInsertPensione();
 renderAll();
