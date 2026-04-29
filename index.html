@@ -1,0 +1,1786 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MyWallet</title>
+  <style>
+    :root {
+      --bg: #f4f4f6;
+      --surface: #ffffff;
+      --accent: #5b7cfa;
+      --accent-soft: #dfe4ff;
+      --text: #222222;
+      --muted: #666666;
+      --danger: #d9534f;
+      --success: #4caf50;
+      --border: #dddddd;
+      --radius: 10px;
+      --space: 12px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    header {
+      background: var(--surface);
+      padding: 10px 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    header h1 { font-size: 18px; margin: 0; }
+    .tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+    .tab-btn {
+      border: 1px solid var(--border);
+      background: var(--surface);
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 13px;
+      cursor: pointer;
+      color: var(--muted);
+    }
+    .tab-btn.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+    main { max-width: 1100px; margin: 12px auto 24px; padding: 0 12px; }
+    .page { display: none; }
+    .page.active { display: block; }
+    .grid { display: grid; gap: 12px; }
+    @media (min-width: 800px) {
+      .grid-2 { grid-template-columns: 2fr 1.2fr; }
+      .grid-3 { grid-template-columns: repeat(3, 1fr); }
+      .grid-accounts { grid-template-columns: repeat(5, 1fr); }
+    }
+    .card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: var(--space);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+    .card h2 { margin: 0 0 6px; font-size: 16px; }
+    .card h3 { margin: 0 0 4px; font-size: 14px; }
+    .muted { color: var(--muted); font-size: 12px; }
+    .value { font-weight: 700; font-size: 18px; }
+    .value.negative { color: var(--danger); }
+    .value.positive { color: var(--success); }
+    .pill {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
+    label { display: block; font-size: 13px; margin-bottom: 2px; }
+    input, select, textarea {
+      width: 100%;
+      padding: 8px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+    textarea { min-height: 60px; resize: vertical; }
+    button { border-radius: 999px; border: none; padding: 8px 14px; font-size: 13px; cursor: pointer; }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-outline { background: transparent; color: var(--accent); border: 1px solid var(--accent-soft); }
+    .btn-sm { padding: 3px 9px; font-size: 11px; }
+    .btn-danger { background: #ffe5e5; color: var(--danger); }
+    .btn-edit { background: #e8f0ff; color: var(--accent); }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    th, td { padding: 6px 4px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
+    th { font-weight: 600; font-size: 12px; background: #f9f9fb; position: sticky; top: 0; }
+    .badge { display: inline-block; padding: 2px 6px; border-radius: 999px; font-size: 11px; background: #f1f1f5; color: var(--muted); }
+    .badge-red { background: #ffe5e5; color: var(--danger); }
+    .badge-green { background: #e4f6e7; color: var(--success); }
+    .small { font-size: 11px; }
+    .kdp-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+    }
+    .account-tile {
+      border: 1px solid #ececf1;
+      border-radius: 10px;
+      padding: 10px;
+      background: #fcfcfe;
+    }
+    .account-name {
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      margin-bottom: 6px;
+    }
+    .highlight-net {
+      margin-top: 8px;
+      padding: 10px;
+      border-radius: 10px;
+      background: #f7f8ff;
+      border: 1px solid #e6e9ff;
+    }
+    .highlight-net.negative-net {
+      background: #fff3f3;
+      border-color: #ffd6d6;
+    }
+    .highlight-net .value { font-size: 22px; }
+    .cassetta-toggle {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1;
+    }
+    .account-tile-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    .edit-modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.35);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+    .edit-modal-overlay.open { display: flex; }
+    .edit-modal {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 20px;
+      width: 90%;
+      max-width: 480px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    }
+    .edit-modal h3 { margin: 0 0 12px; font-size: 15px; }
+    .edit-modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 8px; }
+    .info-row { margin-bottom: 4px; font-size: 12px; }
+    .info-row strong { font-size: 13px; }
+
+    /* ── BOTTONI 3D CONTI ──────────────────────────────────────────────── */
+    .account-tile {
+      border: none;
+      border-radius: 18px;
+      padding: 14px 10px 16px;
+      cursor: default;
+      position: relative;
+      text-align: center;
+      transition: transform 0.12s ease, box-shadow 0.12s ease;
+      user-select: none;
+    }
+    .account-tile:active { transform: translateY(3px); }
+
+    /* effetto 3D: bordo inferiore spesso = "spessore" del bottone */
+    .account-tile.color-blue {
+      background: linear-gradient(160deg, #6ab0ff 0%, #2176ff 60%, #1558cc 100%);
+      box-shadow: 0 6px 0 #0d3a8a, 0 8px 16px rgba(33,118,255,0.45);
+    }
+    .account-tile.color-yellow {
+      background: linear-gradient(160deg, #ffe066 0%, #ffb300 60%, #e08000 100%);
+      box-shadow: 0 6px 0 #9a5700, 0 8px 16px rgba(255,179,0,0.45);
+    }
+    .account-tile.color-purple {
+      background: linear-gradient(160deg, #cc88ff 0%, #8a2be2 60%, #5c0fa3 100%);
+      box-shadow: 0 6px 0 #3a0870, 0 8px 16px rgba(138,43,226,0.45);
+    }
+    .account-tile.color-green {
+      background: linear-gradient(160deg, #7ae87a 0%, #22b422 60%, #157a15 100%);
+      box-shadow: 0 6px 0 #0a4a0a, 0 8px 16px rgba(34,180,34,0.45);
+    }
+    .account-tile.color-red {
+      background: linear-gradient(160deg, #ff8888 0%, #e02020 60%, #a00000 100%);
+      box-shadow: 0 6px 0 #600000, 0 8px 16px rgba(220,32,32,0.45);
+    }
+
+    /* riflesso lucido in alto */
+    .account-tile::before {
+      content: "";
+      position: absolute;
+      top: 6px; left: 12%; right: 12%;
+      height: 30%;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.28);
+      pointer-events: none;
+    }
+
+    .account-tile .account-name {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.85);
+      margin-bottom: 8px;
+      display: block;
+    }
+    .account-tile .value {
+      font-size: 20px;
+      font-weight: 800;
+      color: #fff;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    }
+    .account-tile-header {
+      justify-content: center;
+      margin-bottom: 4px;
+    }
+    .cassetta-toggle {
+      color: rgba(255,255,255,0.8) !important;
+    }
+    /* card conti: sfondo scuro elegante */
+    #card-conti {
+      background: #1a1a2e;
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.18);
+    }
+    #card-conti h2 { color: #fff; margin-bottom: 12px; }
+    #accounts-totale .pill {
+      background: rgba(255,255,255,0.15);
+      color: #fff;
+      font-size: 12px;
+    }
+
+    /* ── PANNELLI INFO 3D ──────────────────────────────────────────────── */
+    .info-tile {
+      border-radius: 18px;
+      padding: 16px 14px 20px;
+      position: relative;
+      text-align: center;
+      transition: transform 0.12s ease, box-shadow 0.12s ease;
+      margin-bottom: 10px;
+    }
+    .info-tile:active { transform: translateY(3px); }
+    .info-tile::before {
+      content: "";
+      position: absolute;
+      top: 7px; left: 14%; right: 14%;
+      height: 28%;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.22);
+      pointer-events: none;
+    }
+    .info-tile .tile-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .07em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.8);
+      margin-bottom: 6px;
+      display: block;
+    }
+    .info-tile .tile-value {
+      font-size: 22px;
+      font-weight: 800;
+      color: #fff;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.3);
+      display: block;
+    }
+    .info-tile .tile-sub {
+      font-size: 11px;
+      color: rgba(255,255,255,0.75);
+      margin-top: 5px;
+      display: block;
+    }
+    .info-tile .tile-alert {
+      margin-top: 6px;
+      background: rgba(0,0,0,0.18);
+      border-radius: 8px;
+      padding: 4px 8px;
+      font-size: 11px;
+      color: #fff;
+      font-weight: 600;
+    }
+    /* colori pannelli */
+    .info-tile.color-teal {
+      background: linear-gradient(160deg, #4dd9d0 0%, #00a896 60%, #006f65 100%);
+      box-shadow: 0 6px 0 #004a42, 0 8px 18px rgba(0,168,150,0.45);
+    }
+    .info-tile.color-emerald {
+      background: linear-gradient(160deg, #6effa0 0%, #20b857 60%, #0e7a38 100%);
+      box-shadow: 0 6px 0 #064a20, 0 8px 18px rgba(32,184,87,0.45);
+    }
+    .info-tile.color-orange {
+      background: linear-gradient(160deg, #ffb347 0%, #ff7c00 60%, #c45500 100%);
+      box-shadow: 0 6px 0 #7a3400, 0 8px 18px rgba(255,124,0,0.45);
+    }
+    .info-tile.color-indigo {
+      background: linear-gradient(160deg, #a78bfa 0%, #5b21b6 60%, #3b0e8c 100%);
+      box-shadow: 0 6px 0 #1e0555, 0 8px 18px rgba(91,33,182,0.45);
+    }
+    .info-tile.color-pink {
+      background: linear-gradient(160deg, #f9a8d4 0%, #ec4899 60%, #9d1b6b 100%);
+      box-shadow: 0 6px 0 #5e0f3e, 0 8px 18px rgba(236,72,153,0.45);
+    }
+    /* griglia 2 colonne per pannelli info */
+    .info-tiles-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .info-tiles-grid .info-tile { margin-bottom: 0; }
+    .info-tile.full-width { grid-column: 1 / -1; }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<header>
+  <h1>💰 MyWallet</h1>
+  <nav class="tabs">
+    <button class="tab-btn active" data-page="home">Home</button>
+    <button class="tab-btn" data-page="new">Nuovo movimento</button>
+    <button class="tab-btn" data-page="tx">Movimenti</button>    
+    <button class="tab-btn" data-page="fixed">Spese fisse</button>
+    <button class="tab-btn" data-page="categories">Categorie</button>
+    <button class="tab-btn" data-page="kdp">KDP Analytics</button>    
+  </nav>
+</header>
+<div id="sheets-status" style="text-align:center;font-size:11px;padding:4px 12px;background:#f0f7ff;color:#555;border-bottom:1px solid #dde8f5;">⏳ Connessione a Google Sheets...</div>
+
+<main>
+
+  <!-- HOME -->
+  <section id="page-home" class="page active">
+
+    <!-- Conti separati -->
+    <div class="card" id="card-conti" style="margin-bottom:12px;">
+      <h2>Conti e saldi</h2>
+      <div id="accounts-tiles" class="grid grid-accounts" style="gap:8px;"></div>
+      <div style="margin-top:8px;" id="accounts-totale"></div>
+    </div>
+
+    <!-- Capitale -->
+    <div class="grid grid-2" style="margin-bottom:12px;">
+      <div class="card">
+        <h2>Capitale</h2>
+        <div id="capital-panel" class="small"></div>
+      </div>
+      <div class="card">
+        <h3>Disponibile operativo</h3>
+        <div id="disponibile-panel" class="small"></div>
+      </div>
+    </div>
+
+    <!-- Pannelli sintetici -->
+    <div class="grid grid-3">
+      <div class="card">
+        <h3>Movimenti mese</h3>
+        <div id="month-overview" class="small"></div>
+      </div>
+      <div class="card">
+        <h3>Spese fisse</h3>
+        <div id="fixed-overview" class="small"></div>
+      </div>
+      <div class="card">
+        <h3>Ads / KDP (mese)</h3>
+        <div id="ads-overview" class="small"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- NUOVO MOVIMENTO -->
+  <section id="page-new" class="page">
+    <div class="card">
+      <h2>Nuovo movimento</h2>
+      <form id="new-tx-form">
+        <label for="tx-date">Data</label>
+        <input type="date" id="tx-date" required />
+
+        <label for="tx-account">Conto</label>
+        <select id="tx-account" required>
+          <option value="bank">Banca</option>
+          <option value="postepay">PostePay Gialla</option>
+          <option value="paypal">PayPal</option>
+          <option value="cash">Contanti</option>
+          <option value="cassetta">Cassetta</option>
+        </select>
+
+        <label for="tx-type">Tipo</label>
+        <select id="tx-type" required>
+          <option value="income">Entrata</option>
+          <option value="expense">Uscita</option>
+        </select>
+
+        <label for="tx-category">Categoria</label>
+        <input list="categories" id="tx-category" placeholder="es. sostentamento, abbonamenti..." />
+        <datalist id="categories">
+          <option value="Abbigliamento"></option>
+          <option value="Abbonamenti"></option>
+          <option value="Ads"></option>
+          <option value="Auto"></option>
+          <option value="Banca/Commissioni"></option>
+          <option value="Bar/Ristorante"></option>
+          <option value="Cane/Veterinario"></option>
+          <option value="Casa"></option>
+          <option value="Pensione"></option>
+          <option value="Royalties KDP ricevute"></option>
+          <option value="Software/AI"></option>
+          <option value="Sostentamento"></option>
+          <option value="Tabacchi"></option>
+          <option value="Tecnologia"></option>
+          <option value="Telefonia"></option>
+          <option value="Spostamenti"></option>
+          <option value="Varie mie"></option>
+        </datalist>
+
+        <label for="tx-amount">Importo (€)</label>
+        <input type="number" id="tx-amount" step="0.01" min="0.01" required />
+
+        <label for="tx-note">Descrizione</label>
+        <textarea id="tx-note" placeholder="es. cappottino bianco, vaccino cane..."></textarea>
+
+        <label for="tx-fixed">Spesa fissa collegata (opzionale)</label>
+        <select id="tx-fixed">
+          <option value="">Nessuna</option>
+        </select>
+
+        <button type="submit" class="btn-primary">Salva movimento</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- MOVIMENTI -->
+  <section id="page-tx" class="page">
+    <div class="card">
+      <h2>Movimenti (mese corrente)</h2>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;align-items:center;">
+        <span style="font-size:12px;color:var(--muted);">Filtra per conto:</span>
+        <select id="tx-filter-account" onchange="renderTransactions()" style="width:auto;margin-bottom:0;font-size:12px;padding:4px 8px;">
+          <option value="">Tutti</option>
+          <option value="bank">Banca</option>
+          <option value="postepay">PostePay Gialla</option>
+          <option value="paypal">PayPal</option>
+          <option value="cash">Contanti</option>
+          <option value="cassetta">Cassetta</option>
+        </select>
+      </div>
+      <div class="small muted" id="tx-count"></div>
+      <div id="tx-totals" style="margin:6px 0 10px;display:flex;gap:16px;flex-wrap:wrap;font-size:12px;"></div>
+      <div style="max-height: 460px; overflow:auto; margin-top:8px;">
+        <table>
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Conto</th>
+              <th>Tipo</th>
+              <th>Categoria</th>
+              <th>Importo</th>
+              <th>Descrizione</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="tx-table-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:12px;">
+      <h2>Distribuzione uscite per categoria</h2>
+      <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;">
+        <canvas id="cat-pie-chart" width="240" height="240" style="flex-shrink:0;"></canvas>
+        <div style="flex:1;min-width:200px;" id="cat-legend"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SPESE FISSE -->
+  <section id="page-fixed" class="page">
+    <div class="card">
+      <h2>Spese fisse del mese</h2>
+      <div id="fixed-list" class="small"></div>
+      <div class="small muted" style="margin-top:8px;">
+        Le spese fisse si marcano automaticamente come pagate quando registri un movimento collegato.
+      </div>
+    </div>
+  </section>
+
+<!-- CATEGORIE -->
+<section id="page-categories" class="page">
+  <div class="card">
+    <h2>Gestione Categorie</h2>
+    <p class="muted" style="margin-bottom:10px;font-size:12px;">
+      Aggiungi categorie e sottocategorie. Le sottocategorie appaiono come <strong>Categoria &gt; Sottocategoria</strong> nei movimenti.
+    </p>
+    <div style="display:flex;gap:8px;margin-bottom:6px;flex-wrap:wrap">
+  <input type="text" id="new-cat-input" placeholder="Nome categoria principale..." style="flex:2;min-width:120px;margin-bottom:0">
+  <button class="btn-primary" onclick="addCategory()" style="white-space:nowrap">+ Categoria</button>
+</div>
+<div class="muted small" style="margin-bottom:12px">
+  Usa il pulsante <strong>+ Sub</strong> accanto a ogni categoria per aggiungere sottocategorie.
+</div>
+    <div class="muted small" style="margin-bottom:12px;">Lascia vuota la sottocategoria per aggiungere solo una categoria principale.</div>
+    <div id="categories-list" class="small"></div>
+  </div>
+</section>
+
+<!-- KDP ANALYTICS -->
+<section id="page-kdp" class="page">
+  <div style="max-width:700px;margin:0 auto;">
+
+    <!-- Stato connessione + aggiorna -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+      <span id="kdp-last-update" style="font-size:11px;color:var(--muted);">⏳ Caricamento dati...</span>
+      <button class="btn-primary btn-sm" onclick="refreshKdp()" id="kdp-refresh-btn">🔄 Aggiorna</button>
+    </div>
+
+    <!-- BLOCCO 1: Questo mese guadagno o perdo? -->
+    <div class="card" style="margin-bottom:12px;">
+      <div style="font-size:13px;font-weight:700;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px;">📅 Questo mese — Ads in corso</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;">
+        <div style="text-align:center;padding:10px;background:#f9f9fb;border-radius:8px;">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">💸 Spesa ads</div>
+          <div id="kdp-spesa" style="font-size:20px;font-weight:700;color:#d9534f;">—</div>
+        </div>
+        <div style="text-align:center;padding:10px;background:#f9f9fb;border-radius:8px;">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">🛒 Vendite generate</div>
+          <div id="kdp-vendite" style="font-size:20px;font-weight:700;color:var(--accent);">—</div>
+        </div>
+        <div style="text-align:center;padding:10px;background:#f9f9fb;border-radius:8px;">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">📊 Guadagno netto ads</div>
+          <div id="kdp-guadagno" style="font-size:20px;font-weight:700;">—</div>
+        </div>
+      </div>
+      <!-- Semaforo campagne -->
+      <div id="kdp-semaforo" style="border-radius:8px;padding:10px 14px;font-size:13px;font-weight:600;text-align:center;">—</div>
+    </div>
+
+    <!-- BLOCCO 2: Cosa arriva a fine mese? -->
+    <div class="card" style="margin-bottom:12px;">
+      <div style="font-size:13px;font-weight:700;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px;">📬 Royalties in arrivo</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+        <div style="padding:10px;background:#f0fff4;border-radius:8px;">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">💶 Febbraio → pagamento ora</div>
+          <div style="font-size:18px;font-weight:700;color:#4caf50;">€ 540</div>
+          <div style="font-size:10px;color:var(--muted);">già accreditate o in arrivo</div>
+        </div>
+        <div style="padding:10px;background:#f0f7ff;border-radius:8px;">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">📅 Marzo → pagamento maggio</div>
+          <div style="font-size:18px;font-weight:700;color:var(--accent);">€ 715</div>
+          <div style="font-size:10px;color:var(--muted);">confermato da KDP</div>
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--muted);padding:8px;background:#f9f9fb;border-radius:6px;">
+        💡 Le royalties previste nella colonna E del tuo foglio sono quelle che <em>stai maturando</em> questo mese — arriveranno in giugno.
+      </div>
+    </div>
+
+    <!-- BLOCCO 3: Le campagne si pagano da sole? -->
+    <div class="card" style="margin-bottom:12px;">
+      <div style="font-size:13px;font-weight:700;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px;">⚖️ Le campagne si autofinanziano?</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+        <div style="padding:10px;background:#f9f9fb;border-radius:8px;text-align:center;">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">Ogni €1 speso in ads genera</div>
+          <div id="kdp-roi" style="font-size:28px;font-weight:700;">—</div>
+          <div style="font-size:10px;color:var(--muted);">di vendite</div>
+        </div>
+        <div style="padding:10px;background:#f9f9fb;border-radius:8px;text-align:center;">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">Royalties previste questo mese</div>
+          <div id="kdp-royalties-mese" style="font-size:28px;font-weight:700;color:var(--accent);">—</div>
+          <div style="font-size:10px;color:var(--muted);">colonna E foglio</div>
+        </div>
+      </div>
+      <div id="kdp-autofinanziamento" style="border-radius:8px;padding:10px 14px;font-size:13px;font-weight:600;text-align:center;">—</div>
+    </div>
+
+    <!-- BLOCCO 4: Posso lanciare una nuova campagna? -->
+    <div class="card" style="margin-bottom:12px;">
+      <div style="font-size:13px;font-weight:700;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px;">🚀 Posso lanciare una nuova campagna?</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:8px;">Lancio = 50€ tuoi + campagna deve autoalimentarsi</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px;">
+        <div style="padding:8px;background:#f9f9fb;border-radius:8px;text-align:center;">
+          <div style="font-size:10px;color:var(--muted);">Feb. in tasca</div>
+          <div style="font-size:15px;font-weight:700;color:#4caf50;">€ 540</div>
+        </div>
+        <div style="padding:8px;background:#f9f9fb;border-radius:8px;text-align:center;">
+          <div style="font-size:10px;color:var(--muted);">Spesa ads mese</div>
+          <div id="kdp-spesa-mini" style="font-size:15px;font-weight:700;color:#d9534f;">—</div>
+        </div>
+        <div style="padding:8px;background:#f9f9fb;border-radius:8px;text-align:center;">
+          <div style="font-size:10px;color:var(--muted);">Surplus disponibile</div>
+          <div id="kdp-surplus" style="font-size:15px;font-weight:700;">—</div>
+        </div>
+      </div>
+      <div id="kdp-lancio" style="border-radius:8px;padding:10px 14px;font-size:13px;font-weight:700;text-align:center;">—</div>
+    </div>
+
+    <!-- BLOCCO 5: Andamento giornaliero -->
+    <div class="card" style="margin-bottom:12px;">
+      <div style="font-size:13px;font-weight:700;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px;">📈 Andamento giornaliero</div>
+      <div id="kdp-trend" style="font-size:13px;text-align:center;color:var(--muted);padding:10px;">Caricamento...</div>
+      <div id="kdp-chart" style="margin-top:8px;"></div>
+      <div id="kdp-tendenza" style="margin-top:8px;padding:8px 12px;background:#f9f9fb;border-radius:6px;font-size:12px;"></div>
+    </div>
+
+  </div>
+</section>
+
+</main>
+
+<!-- MODALE MODIFICA MOVIMENTO -->
+<div class="edit-modal-overlay" id="edit-modal-overlay">
+  <div class="edit-modal">
+    <h3>✏️ Modifica movimento</h3>
+    <input type="hidden" id="edit-tx-id" />
+    <label>Data</label>
+    <input type="date" id="edit-tx-date" />
+    <label>Conto</label>
+    <select id="edit-tx-account">
+      <option value="bank">Banca</option>
+      <option value="postepay">PostePay Gialla</option>
+      <option value="paypal">PayPal</option>
+      <option value="cash">Contanti</option>
+      <option value="cassetta">Cassetta</option>
+    </select>
+    <label>Tipo</label>
+    <select id="edit-tx-type">
+      <option value="income">Entrata</option>
+      <option value="expense">Uscita</option>
+    </select>
+    <label>Categoria</label>
+    <input type="text" id="edit-tx-category" list="categories" />
+    <label>Importo (€)</label>
+    <input type="number" id="edit-tx-amount" step="0.01" min="0.01" />
+    <label>Descrizione</label>
+    <input type="text" id="edit-tx-note" />
+    <div class="edit-modal-actions">
+      <button class="btn-outline" id="edit-cancel-btn">Annulla</button>
+      <button class="btn-primary" id="edit-save-btn">Salva</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ─── COSTANTI ───────────────────────────────────────────────────────────────
+  const currentMonth = "2026-04";
+  let categories = loadData('mwcategories', [
+  { name: 'Abbigliamento', subs: [] },
+  { name: 'Abbonamenti', subs: [] },
+  { name: 'Ads', subs: [] },
+  { name: 'Auto', subs: [] },
+  { name: 'BancaCommissioni', subs: [] },
+  { name: 'BarRistorante', subs: [] },
+  { name: 'CaneVeterinario', subs: [] },
+  { name: 'Casa', subs: [] },
+  { name: 'Pensione', subs: [] },
+  { name: 'Royalties KDP ricevute', subs: [] },
+  { name: 'SoftwareAI', subs: [] },
+  { name: 'Sostentamento', subs: [] },
+  { name: 'Tabacchi', subs: [] },
+  { name: 'Tecnologia', subs: [] },
+  { name: 'Telefonia', subs: [] },
+  { name: 'Spostamenti', subs: [] },
+  { name: 'Varie mie', subs: [] }
+]);
+
+// Migrazione da array di stringhe a array di oggetti
+if (categories.length > 0 && typeof categories[0] === 'string') {
+  categories = categories.map(c => {
+    const parts = c.split(' > ');
+    return { name: parts[0], subs: parts.length > 1 ? [parts.slice(1).join(' > ')] : [] };
+  });
+  saveData('mwcategories', categories);
+}
+
+  // ─── SALDI INIZIALI REALI (già includono pensione e tutto il passato) ────────
+      const accountsInit = {
+    bank:      { name: "Banca",         balance: 2570.69, masked: false },
+    postepay:  { name: "PostePay Gialla", balance: 100.52,  masked: false },
+    paypal:    { name: "PayPal",        balance: 0.00,    masked: false },
+    cash:      { name: "Contanti",      balance: 45.00,   masked: false },
+    cassetta:  { name: "Cassetta",      balance: 0.00,    masked: true  }
+  };
+
+  // ─── PERSISTENZA (Google Sheets) ────────────────────────────────────────────
+  // localStorage usato solo come cache locale temporanea
+  function saveData(key, value) {
+    try { localStorage.setItem(key, JSON.stringify(value)); } catch(e) {}
+  }
+  function loadData(key, fallback) {
+    try {
+      const v = localStorage.getItem(key);
+      return v !== null ? JSON.parse(v) : fallback;
+    } catch(e) { return fallback; }
+  }
+
+  // Salva movimento su Sheets
+  async function sheetsSaveMovement(tx) {
+    if (!APPS_SCRIPT_URL) return;
+    try {
+      await fetch(APPS_SCRIPT_URL, {
+        method: "POST",
+        body: JSON.stringify({ action: "saveMovement", tx })
+      });
+    } catch(e) { console.warn("sheetsSaveMovement error", e); }
+  }
+
+  // Elimina movimento da Sheets
+  async function sheetsDeleteMovement(id) {
+    if (!APPS_SCRIPT_URL) return;
+    try {
+      await fetch(APPS_SCRIPT_URL, {
+        method: "POST",
+        body: JSON.stringify({ action: "deleteMovement", id })
+      });
+    } catch(e) { console.warn("sheetsDeleteMovement error", e); }
+  }
+
+  // Salva saldi su Sheets
+  async function sheetsUpdateSaldi() {
+    if (!APPS_SCRIPT_URL) return;
+    const saldi = {};
+    Object.entries(accounts).forEach(([k,v]) => saldi[k] = v.balance);
+    try {
+      await fetch(APPS_SCRIPT_URL, {
+        method: "POST",
+        body: JSON.stringify({ action: "updateSaldi", saldi })
+      });
+    } catch(e) { console.warn("sheetsUpdateSaldi error", e); }
+  }
+
+  // Carica tutto da Sheets all'avvio
+  async function sheetsLoad() {
+    if (!APPS_SCRIPT_URL) return false;
+    try {
+      const res = await fetch(APPS_SCRIPT_URL + "?action=load");
+      const json = await res.json();
+      if (!json || json.error) return false;
+
+      // Aggiorna saldi dai Sheets (se presenti)
+      if (json.saldi && Object.keys(json.saldi).length > 0) {
+        Object.entries(json.saldi).forEach(([k, v]) => {
+          if (accounts[k]) accounts[k].balance = Number(v);
+        });
+      }
+
+      // Aggiorna movimenti utente dai Sheets
+      if (json.movimenti && json.movimenti.length > 0) {
+        const sheetsUserTx = json.movimenti.filter(tx => !tx.isPreloaded);
+        if (sheetsUserTx.length > 0) {
+          userTransactions = sheetsUserTx;
+        }
+      }
+
+      // Salva in localStorage come cache
+      saveData("mw_accounts", accounts);
+      saveData("mw_user_transactions", userTransactions);
+      return true;
+    } catch(e) {
+      console.warn("sheetsLoad error", e);
+      return false;
+    }
+  }
+
+  // Carica o inizializza conti
+  let accounts = loadData("mw_accounts", accountsInit);
+  // Assicura che le chiavi siano sempre tutte presenti (dopo aggiornamenti)
+  Object.keys(accountsInit).forEach(k => {
+    if (!accounts[k]) accounts[k] = { ...accountsInit[k] };
+    accounts[k].masked = accountsInit[k].masked; // masked non si persiste
+  });
+
+  // ─── MOVIMENTI PRECARICATI (aprile 2026) ─────────────────────────────────────
+  // NOTA: questi movimenti sono già riflessi nei saldi iniziali.
+  // Vengono mostrati solo come storico nella lista movimenti.
+  // NON vengono usati per ricalcolare i saldi o le entrate/uscite del mese.
+    const preloadedTransactions = [
+    // ─── BANCA ───────────────────────────────────────────────────────────────
+    { id: "b_0401_pensione",       date: "2026-04-01", accountId: "bank",     type: "income",  category: "Pensione",         amount: 611.85,  description: "Stipendio/Pensione APR. 2026",                  isPreloaded: true, isFixedExpenseInstance: false },
+    { id: "b_0401_telepass",       date: "2026-04-01", accountId: "bank",     type: "expense", category: "Banca/commissioni", amount: 0.40,    description: "Commissioni domicili Telepass SPA",             isPreloaded: true, isFixedExpenseInstance: false },
+    { id: "b_0402_canone_conto",   date: "2026-04-02", accountId: "bank",     type: "expense", category: "Banca/commissioni", amount: 0.35,    description: "Canone conto Marzo 2026",                       isPreloaded: true, isFixedExpenseInstance: true  },
+    { id: "b_0404_ads_comm",       date: "2026-04-04", accountId: "bank",     type: "expense", category: "Ads",              amount: 3.90,    description: "Commissione Amazon Media Group (ads)",           isPreloaded: true, isFixedExpenseInstance: false },
+    { id: "b_0404_ads_remedios",   date: "2026-04-04", accountId: "bank",     type: "expense", category: "Ads",              amount: 299.63,  description: "Amazon Media Group – ads Remedios",              isPreloaded: true, isFixedExpenseInstance: false },
+    { id: "b_0406_ricarica_ppg",   date: "2026-04-06", accountId: "bank",     type: "expense", category: "Sostentamento",    amount: 330.00,  description: "Ricarica PostePay (sostentamento)",              isPreloaded: true, isFixedExpenseInstance: true  },
+    { id: "b_0406_comm_ricarica",  date: "2026-04-06", accountId: "bank",     type: "expense", category: "Banca/commissioni", amount: 1.00,   description: "Commissione ricarica PostePay sostentamento",    isPreloaded: true, isFixedExpenseInstance: false },
+    { id: "b_0407_canone_carta",   date: "2026-04-07", accountId: "bank",     type: "expense", category: "Banca/commissioni", amount: 1.25,   description: "Canone carta Marzo 2026",                        isPreloaded: true, isFixedExpenseInstance: false },
+    { id: "b_0408_tabacchi",       date: "2026-04-08", accountId: "bank",     type: "expense", category: "Tabacchi",         amount: 26.70,   description: "Tabaccheria",                                    isPreloaded: true, isFixedExpenseInstance: false },
+    { id: "b_0408_ads_small",      date: "2026-04-08", accountId: "bank",     type: "expense", category: "Ads",              amount: 1.46,    description: "Amazon Marketing Svcs (ads)",                    isPreloaded: true, isFixedExpenseInstance: false },
+    { id: "b_0410_ads_college",    date: "2026-04-10", accountId: "bank",     type: "expense", category: "Ads",              amount: 12.71,   description: "Amazon Marketing Svcs – ads College",            isPreloaded: true, isFixedExpenseInstance: false },
+    { id: "b_0413_ricarica_extra", date: "2026-04-13", accountId: "bank",     type: "expense", category: "Spostamenti",    amount: 150.00,  description: "Ricarica PostePay extra",                        isPreloaded: true, isFixedExpenseInstance: false },
+    { id: "b_0413_comm_extra",     date: "2026-04-13", accountId: "bank",     type: "expense", category: "Banca/commissioni", amount: 1.00,   description: "Commissione ricarica PostePay extra",            isPreloaded: true, isFixedExpenseInstance: false },
+    { id: "b_0413_prelievo_atm",   date: "2026-04-13", accountId: "bank",     type: "expense", category: "contanti",         amount: 200.00,  description: "Prelievo ATM Poste San Giorgio di Mantova",      isPreloaded: true, isFixedExpenseInstance: false },
+    { id: "b_0416_ads_remedios2",  date: "2026-04-16", accountId: "bank",     type: "expense", category: "Ads",              amount: 31.35,   description: "Amazon Marketing Svcs – ads Remedios",           isPreloaded: true, isFixedExpenseInstance: false },
+
+    // ─── POSTEPAY GIALLA ─────────────────────────────────────────────────────
+    { id: "p_0401_audible",        date: "2026-04-01", accountId: "postepay", type: "expense", category: "Abbonamenti",      amount: 9.99,    description: "Audible",                                        isPreloaded: true, isFixedExpenseInstance: true  },
+    { id: "p_0402_freepik",        date: "2026-04-02", accountId: "postepay", type: "expense", category: "Abbonamenti",      amount: 9.76,    description: "Freepik Essential",                              isPreloaded: true, isFixedExpenseInstance: true  },
+    { id: "p_0402_prime_video",    date: "2026-04-02", accountId: "postepay", type: "expense", category: "Abbonamenti",      amount: 1.99,    description: "Prime Video ad-free",                            isPreloaded: true, isFixedExpenseInstance: true  },
+    { id: "p_0402_amz_ordine",     date: "2026-04-02", accountId: "postepay", type: "expense", category: "Casa",             amount: 7.95,    description: "Amazon ordine NB7EC65K4",                        isPreloaded: true, isFixedExpenseInstance: false },
+    { id: "p_0403_temu_cappott",   date: "2026-04-03", accountId: "postepay", type: "expense", category: "Abbigliamento",    amount: 29.20,   description: "PayPal *Temu – cappottino bianco",               isPreloaded: true, isFixedExpenseInstance: false },
+    { id: "p_0403_temu_poggia",    date: "2026-04-03", accountId: "postepay", type: "expense", category: "varie mie",        amount: 1.79,    description: "PayPal *Temu – poggiacollo",                     isPreloaded: true, isFixedExpenseInstance: false },
+    { id: "p_0404_netflix",        date: "2026-04-04", accountId: "postepay", type: "expense", category: "Abbonamenti",      amount: 13.99,   description: "Netflix",                                        isPreloaded: true, isFixedExpenseInstance: true  },
+    { id: "p_0407_prime",          date: "2026-04-07", accountId: "postepay", type: "expense", category: "Abbonamenti",      amount: 4.99,    description: "Amazon Prime",                                   isPreloaded: true, isFixedExpenseInstance: true  },
+    { id: "p_0410_amz_ordine2",    date: "2026-04-10", accountId: "postepay", type: "expense", category: "Casa",             amount: 18.39,   description: "Amazon ordine NI8G18B04",                        isPreloaded: true, isFixedExpenseInstance: false },
+    { id: "p_0411_sim",            date: "2026-04-11", accountId: "postepay", type: "expense", category: "Telefonia",        amount: 10.00,   description: "Ricarica SIM",                                   isPreloaded: true, isFixedExpenseInstance: true  },
+    { id: "p_0413_ricarica_extra", date: "2026-04-13", accountId: "postepay", type: "income",  category: "Spostamenti",    amount: 150.00,  description: "Ricarica da banca per extra",                    isPreloaded: true, isFixedExpenseInstance: false },
+    { id: "p_0413_perplexity",     date: "2026-04-13", accountId: "postepay", type: "expense", category: "software/AI",      amount: 52.24,   description: "Perplexity.AI",                                  isPreloaded: true, isFixedExpenseInstance: false },
+    { id: "p_0413_comm_perpl",     date: "2026-04-13", accountId: "postepay", type: "expense", category: "Banca/commissioni", amount: 0.57,   description: "Commissioni pagamento Perplexity.AI",            isPreloaded: true, isFixedExpenseInstance: false },
+
+    // ─── CONTANTI (prelievo ATM + spese) ─────────────────────────────────────
+    { id: "c_0413_prelievo",       date: "2026-04-13", accountId: "cash",     type: "income",  category: "Spostamenti",    amount: 200.00,  description: "Prelievo ATM (entrata contanti)",                isPreloaded: true, isFixedExpenseInstance: false },
+    { id: "c_0415_vet_cane",       date: "2026-04-15", accountId: "cash",     type: "expense", category: "Cane", amount: 50.00,   description: "Veterinario – vaccino annuale",                  isPreloaded: true, isFixedExpenseInstance: false },
+    { id: "c_0419_tabacchi",       date: "2026-04-19", accountId: "cash",     type: "expense", category: "Tabacchi",         amount: 22.50,   description: "Tabacchi / bar colazione",                       isPreloaded: true, isFixedExpenseInstance: false }
+  ];
+
+  // Movimenti aggiunti dall'utente (questi modificano i saldi e compaiono nei calcoli della Home)
+  let userTransactions = loadData("mw_user_transactions", []);
+
+  // Lista unica per visualizzazione (precaricati + utente)
+  let hiddenPreloaded = loadData("mw_hidden_preloaded", []);
+
+  function allTransactions() {
+    const visiblePreloaded = preloadedTransactions.filter(tx => !hiddenPreloaded.includes(tx.id));
+    return [...visiblePreloaded, ...userTransactions];
+  }
+
+  // ─── SPESE FISSE ─────────────────────────────────────────────────────────────
+  const fixedExpensesConfig = [
+    { id: "fx_pensione",       name: "Pensione",             defaultAmount: 611.00, category: "Pensione",      accountId: "bank",    variableAmount: true,  isIncome: true },
+  { id: "fx_sostentamento",  name: "Sostentamento",        defaultAmount: 330,   category: "Sostentamento", accountId: "bank",     variableAmount: false },
+    { id: "fx_netflix",        name: "Netflix",              defaultAmount: 13.99, category: "Abbonamenti",   accountId: "postepay", variableAmount: false },
+    { id: "fx_audible",        name: "Audible",              defaultAmount: 9.99,  category: "Abbonamenti",   accountId: "postepay", variableAmount: false },
+    { id: "fx_freepik",        name: "Freepik",              defaultAmount: 9.76,  category: "Abbonamenti",   accountId: "postepay", variableAmount: false },
+    { id: "fx_prime_video",    name: "Prime Video ad-free",  defaultAmount: 1.99,  category: "Abbonamenti",   accountId: "postepay", variableAmount: false },
+    { id: "fx_prime",          name: "Amazon Prime",         defaultAmount: 4.99,  category: "Abbonamenti",   accountId: "postepay", variableAmount: false },
+    { id: "fx_canone_conto",   name: "Canone conto",         defaultAmount: 0.35,  category: "Banca/commissioni", accountId: "bank", variableAmount: false },
+    { id: "fx_sim", name: "Ricarica SIM", defaultAmount: 10, category: "Telefonia", accountId: "postepay", variableAmount: true },
+    { id: "fx_perplexity", name: "Perplexity.AI", defaultAmount: 20.82, category: "Tecnologia", accountId: "postepay", variableAmount: false },
+    { id: "fx_perplexity_comm", name: "Commissione Perplexity", defaultAmount: 0.23, category: "Banca/commissioni", accountId: "postepay", variableAmount: true },
+    { id: "fx_dropbox", name: "Dropbox", defaultAmount: 11.99, category: "Tecnologia", accountId: "postepay", variableAmount: false }
+  ];
+
+  // Regole di matching: dato un movimento, dice a quale spesa fissa appartiene
+  const fixedMatchRules = {
+    fx_pensione:      tx => tx.accountId === "bank" && tx.type === "income" && tx.category.toLowerCase() === "pensione",
+    fx_sostentamento: tx => tx.accountId === "bank"     && tx.type === "expense" && tx.category.toLowerCase() === "sostentamento",
+    fx_netflix:       tx => tx.accountId === "postepay" && tx.type === "expense" && tx.description.toLowerCase().includes("netflix"),
+    fx_audible:       tx => tx.accountId === "postepay" && tx.type === "expense" && tx.description.toLowerCase().includes("audible"),
+    fx_freepik:       tx => tx.accountId === "postepay" && tx.type === "expense" && tx.description.toLowerCase().includes("freepik"),
+    fx_prime_video:   tx => tx.accountId === "postepay" && tx.type === "expense" && tx.description.toLowerCase().includes("prime video"),
+    fx_prime:         tx => tx.accountId === "postepay" && tx.type === "expense" && tx.description.toLowerCase().includes("amazon prime"),
+    fx_canone_conto:  tx => tx.accountId === "bank"     && tx.type === "expense" && tx.description.toLowerCase().includes("canone conto"),
+    fx_sim: tx => tx.accountId === "postepay" && tx.type === "expense" && tx.category === "telefonia",
+    fx_perplexity:      tx => tx.accountId === "postepay" && tx.type === "expense" && tx.description.toLowerCase().includes("perplexity") && !tx.description.toLowerCase().includes("commissi"),
+    fx_perplexity_comm: tx => tx.accountId === "postepay" && tx.type === "expense" && tx.description.toLowerCase().includes("perplexity") && tx.description.toLowerCase().includes("commissi"),
+    fx_dropbox:         tx => tx.accountId === "postepay" && tx.type === "expense" && tx.description.toLowerCase().includes("dropbox")
+  };
+
+  function isFixedPaid(configId, month) {
+    const rule = fixedMatchRules[configId];
+    if (!rule) return false;
+    return allTransactions().some(tx => tx.date.startsWith(month) && rule(tx));
+  }
+
+  // ─── KDP DATA ────────────────────────────────────────────────────────────────
+  let kdpData = loadData('mwkdp', {});
+
+  // ─── STATO UI ────────────────────────────────────────────────────────────────
+  let cassettaVisible = false;
+
+  // ─── UTILS ───────────────────────────────────────────────────────────────────
+  function fmt(val) {
+    return Number(val || 0).toLocaleString("it-IT", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+      useGrouping: true
+    });
+  }
+
+  const capitalConfig = { base: 2500, startMonth: "2026-04", months: 6, rate: 0.01 };
+
+  function computeCapitalThreshold(targetMonth) {
+    let C = capitalConfig.base;
+    let y = parseInt(capitalConfig.startMonth.slice(0,4)), m = parseInt(capitalConfig.startMonth.slice(5,7));
+    let ty = parseInt(targetMonth.slice(0,4)), tm = parseInt(targetMonth.slice(5,7));
+    let steps = (ty - y) * 12 + (tm - m);
+    steps = Math.max(0, Math.min(steps, capitalConfig.months));
+    for (let i = 0; i < steps; i++) C *= (1 + capitalConfig.rate);
+    return Number(C.toFixed(2));
+  }
+
+  // ─── AUTO PENSIONE ──────────────────────────────────────────────────────────
+  function autoInsertPensione() {
+    const firstOfMonth = `${currentMonth}-01`;
+    const alreadyInserted = allTransactions().some(tx =>
+      tx.category.toLowerCase() === "pensione" && tx.date.startsWith(currentMonth) && tx.accountId === "bank"
+    );
+    if (!alreadyInserted) {
+      const cfg = fixedExpensesConfig.find(c => c.id === "fx_pensione");
+      if (cfg) {
+        const tx = {
+          id: "auto_pensione_" + currentMonth,
+          date: firstOfMonth,
+          accountId: "bank",
+          type: "income",
+          category: "Pensione",
+          amount: cfg.defaultAmount,
+          description: "Pensione – modifica importo se necessario",
+          isPreloaded: false,
+          isFixedExpenseInstance: true
+        };
+        userTransactions.push(tx);
+        accounts.bank.balance += tx.amount;
+        persistAll();
+      }
+    }
+  }
+
+  // ─── RENDER HOME ─────────────────────────────────────────────────────────────
+  function renderHome() {
+    // — Tile conti —
+    const tilesDiv = document.getElementById("accounts-tiles");
+    const tileColors = { bank: "color-blue", postepay: "color-yellow", paypal: "color-purple", cash: "color-green", cassetta: "color-red" };
+    tilesDiv.innerHTML = Object.entries(accounts).map(([id, acc]) => {
+      const isCassetta = id === "cassetta";
+      const showBalance = isCassetta ? cassettaVisible : true;
+      const colorClass = tileColors[id] || "color-blue";
+      return `
+        <div class="account-tile ${colorClass}">
+          <div class="account-tile-header">
+            <span class="account-name">${acc.name}</span>
+            ${isCassetta ? `<button class="cassetta-toggle" onclick="toggleCassetta()" title="${cassettaVisible ? 'Nascondi' : 'Mostra'} saldo">${cassettaVisible ? '🙈' : '👁'}</button>` : ''}
+          </div>
+          <div class="value" id="cassetta-value-${id}">${showBalance ? '€ ' + fmt(acc.balance) : '••••••'}</div>
+        </div>
+      `;
+    }).join("");
+
+    // Totale visibile (esclusa cassetta)
+        const capitalLocked = computeCapitalThreshold(currentMonth);
+    const bankOperativo = Math.max(0, (accounts.bank.balance || 0) - capitalLocked);
+    const visibleTotal = bankOperativo
+      + (accounts.postepay.balance || 0)
+      + (accounts.paypal.balance || 0)
+      + (accounts.cash.balance || 0);
+    document.getElementById("accounts-totale").innerHTML =
+      ``;
+
+    // — Capitale —
+    const threshold = computeCapitalThreshold(currentMonth);
+    const margin = (accounts.bank.balance || 0) - threshold;
+    const marginClass = margin >= 0 ? "positive" : "negative";
+    const capitalAlert = margin < 0 ? `<div style="margin-top:6px;padding:6px 10px;background:#ffe5e5;border-radius:6px;color:#d9534f;font-size:12px;font-weight:600;">⚠️ Saldo banca sotto la soglia intoccabile di € ${fmt(Math.abs(margin))}</div>` : "";
+    document.getElementById("capital-panel").innerHTML = `
+      <div class="info-tile color-teal">
+        <span class="tile-label">🔒 Capitale Intoccabile</span>
+        <span class="tile-value" style="font-size:14px;font-weight:600;">€ ${fmt(threshold)}</span>
+        <span class="tile-sub" style="font-size:10px;">Saldo banca: € ${fmt(accounts.bank.balance)}</span>
+        <span class="tile-sub">Margine: <strong style="font-size:24px;color:${margin>=0?'#b6ffd8':'#ffd6d6'};">€ ${fmt(margin)}</strong></span>
+        ${margin < 0 ? `<div class="tile-alert">⚠️ Sotto soglia di € ${fmt(Math.abs(margin))}</div>` : ''}
+      </div>
+    `;
+
+    // — Disponibile operativo —
+    // Solo i movimenti dell'utente (non precaricati) modificano il disponibile
+    const userMonthTx = userTransactions.filter(tx => tx.date.startsWith(currentMonth));
+    const userIncome   = userMonthTx.filter(tx => tx.type === "income").reduce((s, tx) => s + tx.amount, 0);
+    const userExpenses = userMonthTx.filter(tx => tx.type === "expense").reduce((s, tx) => s + tx.amount, 0);
+    const pendingFixed = fixedExpensesConfig
+      .filter(cfg => !isFixedPaid(cfg.id, currentMonth))
+      .reduce((s, cfg) => s + cfg.defaultAmount, 0);
+    const disponibile = visibleTotal - pendingFixed;
+    const dispClass = disponibile >= 0 ? "positive" : "negative";
+    document.getElementById("disponibile-panel").innerHTML = `
+      <div class="info-tile color-emerald">
+        <span class="tile-label">💰 Disponibile Operativo</span>
+        <span class="tile-value">€ ${fmt(disponibile)}</span>
+        <span class="tile-sub">Totale conti: € ${fmt(visibleTotal)}</span>
+        <span class="tile-sub">Spese fisse restanti: ${pendingFixed > 0 ? '– ' : ''}€ ${fmt(pendingFixed)}</span>
+      </div>
+    `;
+
+    // — Movimenti mese (solo nuovi dell'utente) —
+    const moDiv = document.getElementById("month-overview");
+    if (userMonthTx.length === 0) {
+      moDiv.innerHTML = `
+        <div class="info-tile color-indigo">
+          <span class="tile-label">📋 Movimenti del Mese</span>
+          <span class="tile-value">0</span>
+          <span class="tile-sub">Nessun nuovo movimento</span>
+        </div>`;
+    } else {
+      const netUser = userIncome - userExpenses;
+      const netClass = netUser >= 0 ? "positive" : "negative";
+      moDiv.innerHTML = `
+        <div class="info-tile color-indigo">
+          <span class="tile-label">📋 Movimenti del Mese</span>
+          <span class="tile-value">${userMonthTx.length}</span>
+          <span class="tile-sub">▲ € ${fmt(userIncome)} &nbsp;|&nbsp; ▼ € ${fmt(userExpenses)}</span>
+          <span class="tile-sub">Saldo: <strong style="color:${netUser>=0?'#c4f0ff':'#ffd6d6'};">€ ${fmt(netUser)}</strong></span>
+        </div>`;
+    }
+
+    // — Spese fisse —
+    const fixedDiv = document.getElementById("fixed-overview");
+    const pendingList = fixedExpensesConfig.filter(cfg => !cfg.isIncome && !isFixedPaid(cfg.id, currentMonth));
+    const paidList    = fixedExpensesConfig.filter(cfg => !cfg.isIncome &&  isFixedPaid(cfg.id, currentMonth));
+    const totFixed = fixedExpensesConfig.filter(cfg => !cfg.isIncome).length;
+    const pendingAmt = pendingList.reduce((s,c)=>s+c.defaultAmount,0);
+    fixedDiv.innerHTML = `
+      <div class="info-tile color-pink">
+        <span class="tile-label">🗂️ Spese Fisse</span>
+        <span class="tile-value">✅ ${paidList.length} / ${totFixed}</span>
+        <span class="tile-sub">Da pagare: ${pendingList.length}${pendingAmt > 0 ? ' – € ' + fmt(pendingAmt) : ''}</span>
+        ${pendingList.length ? `<div class="tile-alert">${pendingList.slice(0,3).map(c=>c.name).join(" · ")}${pendingList.length>3?' …':''}</div>` : '<div class="tile-alert">Tutte pagate 🎉</div>'}
+      </div>
+    `;
+
+    // — Ads / KDP — tile home
+    const adsDiv = document.getElementById("ads-overview");
+    const kd = kdpData;
+    if (kd && kd.rows && kd.rows.length > 0) {
+      const lastRow = kd.rows.filter(r => r.costo > 0 || r.vendite > 0).slice(-1)[0];
+      if (lastRow) {
+        const gd = lastRow.guadagno || 0;
+        const gdColor = gd >= 0 ? '#c4f0ff' : '#ffd6d6';
+        adsDiv.innerHTML = `
+          <div class="info-tile color-orange" onclick="document.querySelector('[data-page=kdp]').click()" style="cursor:pointer;">
+            <span class="tile-label">📈 KDP / Ads</span>
+            <span class="tile-value" style="font-size:14px;">€ ${fmt(lastRow.spesa || lastRow.costo || 0)} spesi</span>
+            <span class="tile-sub">Vendite: € ${fmt(lastRow.vendite || 0)}</span>
+            <span class="tile-sub">Netto: <strong style="color:${gdColor};">${gd >= 0 ? '+' : ''}€ ${fmt(gd)}</strong></span>
+          </div>`;
+      }
+    } else {
+      adsDiv.innerHTML = `
+        <div class="info-tile color-orange" onclick="document.querySelector('[data-page=kdp]').click()" style="cursor:pointer;">
+          <span class="tile-label">📈 KDP / Ads</span>
+          <span class="tile-value" style="font-size:14px;">—</span>
+          <span class="tile-sub">Vai su KDP per aggiornare</span>
+        </div>`;
+    }
+  }
+
+  // ─── RENDER SPESE FISSE ───────────────────────────────────────────────────────
+  function renderFixedExpenses() {
+    const list = document.getElementById("fixed-list");
+    list.innerHTML = fixedExpensesConfig.filter(cfg => !cfg.isIncome).map(cfg => {
+      const paid = isFixedPaid(cfg.id, currentMonth);
+      const statusClass = paid ? "badge-green" : "badge-red";
+      const statusLabel = paid ? "✅ Pagata" : "⏳ Da pagare";
+      return `
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);">
+          <div>
+            <strong>${cfg.name}</strong>
+            <span class="muted"> – € ${fmt(cfg.defaultAmount)}</span>
+            ${cfg.variableAmount ? '<span class="pill" style="margin-left:4px;font-size:10px;">importo variabile</span>' : ''}
+          </div>
+          <span class="badge ${statusClass}">${statusLabel}</span>
+        </div>
+      `;
+    }).join("");
+  }
+
+  // ─── RENDER MOVIMENTI ─────────────────────────────────────────────────────────
+  let pieChartInstance = null;
+
+  function renderTransactions() {
+    const tbody = document.getElementById("tx-table-body");
+    const filterAccount = document.getElementById("tx-filter-account")?.value || "";
+    const all = allTransactions().filter(tx =>
+      tx.date.startsWith(currentMonth) &&
+      (!filterAccount || tx.accountId === filterAccount)
+    );
+    document.getElementById("tx-count").textContent = `${all.length} movimento/i nel mese ${currentMonth}`;
+
+    // Totali filtrati
+    const totIncome  = all.filter(t => t.type === "income").reduce((s,t) => s + t.amount, 0);
+    const totExpense = all.filter(t => t.type === "expense").reduce((s,t) => s + t.amount, 0);
+    const net = totIncome - totExpense;
+    const netColor = net >= 0 ? "var(--success)" : "var(--danger)";
+    const totDiv = document.getElementById("tx-totals");
+    if (totDiv) totDiv.innerHTML = `
+      <span style="color:var(--success);">▲ Entrate: <strong>€ ${fmt(totIncome)}</strong></span>
+      <span style="color:var(--danger);">▼ Uscite: <strong>€ ${fmt(totExpense)}</strong></span>
+      <span style="color:${netColor};">= Saldo: <strong>€ ${fmt(net)}</strong></span>
+    `;
+
+    tbody.innerHTML = [...all]
+      .sort((a, b) => b.date.localeCompare(a.date))
+      .map(tx => {
+        const accName = accounts[tx.accountId]?.name || tx.accountId;
+        const sign = tx.type === "income" ? "+" : "–";
+        const amtClass = tx.type === "income" ? "positive" : "negative";
+        const typeLabel = tx.type === "income" ? "Entrata" : "Uscita";
+        const isUser = true; // tutti i movimenti sono modificabili
+        return `
+          <tr>
+            <td>${tx.date.split("-").reverse().join("/")}</td>
+            <td>${accName}</td>
+            <td><span class="badge ${tx.type === 'income' ? 'badge-green' : 'badge-red'}">${typeLabel}</span></td>
+            <td>${tx.category || ""}</td>
+            <td class="${amtClass}">${sign} € ${fmt(tx.amount)}</td>
+            <td>${tx.description || ""}</td>
+            <td style="white-space:nowrap;">
+              ${isUser ? `
+                <button class="btn-sm btn-edit" onclick="openEditModal('${tx.id}')">✏️</button>
+                <button class="btn-sm btn-danger" style="margin-left:3px;" onclick="deleteTransaction('${tx.id}')">🗑</button>
+              ` : ''}
+            </td>
+          </tr>
+        `;
+      }).join("");
+
+    // Grafico torta categorie: escluso Spostamenti, Ads, Giroconto
+// Le sottocategorie (formato "Categoria > Sub") ricevono sfumature del colore della categoria madre
+
+const EXCLUDED_CATS = ['spostamenti', 'ads', 'giroconto'];
+
+// Palette base per categoria principale (nome lowercase → colore hex)
+const CAT_BASE_COLORS = {
+  'abbigliamento':        'ec4899',
+  'abbonamenti':          '8b5cf6',
+  'auto':                 'f97316',
+  'bancacommissioni':     '94a3b8',
+  'barristorante':        'f59e0b',
+  'caneveterinario':      '84cc16',
+  'casa':                 '14b8a6',
+  'pensione':             '22c55e',
+  'royalties kdp ricevute': '06b6d4',
+  'softwareai':           '6366f1',
+  'sostentamento':        'ef4444',
+  'tabacchi':             'a78bfa',
+  'tecnologia':           '0ea5e9',
+  'telefonia':            '10b981',
+  'varie mie':            'e2e8f0',
+  'salute':               'f43f5e',
+  'bellezza':             'fb7185',
+};
+const DEFAULT_COLOR = '5b7cfa';
+
+// Funzione: dato un colore hex e un indice sub (0=madre, 1,2,3...=più chiaro)
+function shadeHex(hex, idx) {
+  let r = parseInt(hex.slice(0,2),16);
+  let g = parseInt(hex.slice(2,4),16);
+  let b = parseInt(hex.slice(4,6),16);
+  // Ogni sub-livello: mescola verso il bianco del 18%
+  const factor = 1 - idx * 0.18;
+  r = Math.round(r + (255 - r) * (1 - factor));
+  g = Math.round(g + (255 - g) * (1 - factor));
+  b = Math.round(b + (255 - b) * (1 - factor));
+  return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`;
+}
+
+// Aggrega importi per voce (categoria o "Categoria > Sub")
+const catMap = {};
+all.filter(t =>
+  t.type === 'expense' &&
+  !EXCLUDED_CATS.includes((t.category || '').toLowerCase().split(' > ')[0].trim())
+).forEach(t => {
+  const cat = t.category || 'altro';
+  catMap[cat] = (catMap[cat] || 0) + t.amount;
+});
+const cats = Object.entries(catMap).sort((a,b) => b[1]-a[1]);
+
+// Assegna colori: per ogni voce, determina la categoria madre e il suo indice sub
+const subCounters = {}; // quante sub ha già avuto ogni categoria madre
+const palette = cats.map(([label]) => {
+  const parts = label.split(' > ');
+  const motherKey = parts[0].toLowerCase().trim()
+    .replace(/\s+/g,'');               // rimuove spazi per il lookup
+  const motherKeyRaw = parts[0].toLowerCase().trim(); // con spazi (per chiavi tipo "varie mie")
+  const baseHex = CAT_BASE_COLORS[motherKeyRaw] || CAT_BASE_COLORS[motherKey] || DEFAULT_COLOR;
+  if (parts.length === 1) {
+    // Categoria madre: usa il colore base diretto
+    subCounters[motherKeyRaw] = subCounters[motherKeyRaw] || 0;
+    return shadeHex(baseHex, 0);
+  } else {
+    // Sottocategoria: sfuma progressivamente
+    subCounters[motherKeyRaw] = (subCounters[motherKeyRaw] || 0) + 1;
+    return shadeHex(baseHex, subCounters[motherKeyRaw]);
+  }
+});
+    const canvas = document.getElementById("cat-pie-chart");
+    if (canvas) {
+      if (pieChartInstance) { pieChartInstance.destroy(); pieChartInstance = null; }
+      if (cats.length === 0) {
+        document.getElementById("cat-legend").innerHTML = '<span style="color:var(--muted);font-size:12px;">Nessuna uscita nel periodo.</span>';
+        canvas.getContext("2d").clearRect(0,0,260,260);
+      } else {
+        pieChartInstance = new Chart(canvas, {
+          type: "doughnut",
+          data: {
+            labels: cats.map(c => c[0]),
+            datasets: [{ data: cats.map(c => c[1]), backgroundColor: palette.slice(0, cats.length), borderWidth: 2, borderColor: "#fff" }]
+          },
+          options: { responsive: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` ${ctx.label}: € ${fmt(ctx.parsed)}` } } } }
+        });
+        const total = cats.reduce((s,c) => s + c[1], 0);
+        document.getElementById("cat-legend").innerHTML = cats.map((c,i) => `
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;font-size:12px;">
+            <span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:${palette[i]};flex-shrink:0;"></span>
+            <span style="flex:1;">${c[0]}</span>
+            <strong>€ ${fmt(c[1])}</strong>
+            <span style="color:var(--muted);">${((c[1]/total)*100).toFixed(1)}%</span>
+          </div>
+        `).join("");
+      }
+    }
+  }
+
+  // ─── RENDER KDP ───────────────────────────────────────────────────────────────
+  // Cambio fisso: 1 USD = 0.93 EUR, 1 CAD = 0.69 EUR, 1 MXN = 0.046 EUR
+  // Royalties KDP da report ufficiali (aggiornare manualmente se cambiano):
+  const KDP_ROYALTIES_FEBBRAIO = 540;  // pagamento aprile — già in tasca
+  const KDP_ROYALTIES_MARZO    = 715;  // pagamento maggio — confermato
+
+  function renderKdp() {
+    const d = kdpData;
+    if (!d || !d.rows || d.rows.length === 0) {
+      document.getElementById('kdp-last-update').textContent = '⚠️ Nessun dato — premi Aggiorna';
+      ['kdp-spesa','kdp-vendite','kdp-guadagno','kdp-roi','kdp-royalties-mese',
+       'kdp-spesa-mini','kdp-surplus','kdp-trend'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = '—';
+      });
+      return;
+    }
+
+    // Filtra solo righe con dati (costo totale > 0 o vendite > 0)
+    const rows = d.rows.filter(r => r.costo > 0 || r.vendite > 0);
+    if (rows.length === 0) return;
+
+    // Ultimi valori cumulativi (ultima riga con dati)
+    const last = rows[rows.length - 1];
+    const spesa   = last.costo    || 0;
+    const vendite = last.vendite  || 0;
+    const guadagno = last.guadagno || 0;  // vendite * 0.65 - spesa (già calcolato nel foglio)
+    const royaltiesMese = last.royalties || 0;  // colonna E
+
+    // Blocco 1
+    document.getElementById('kdp-spesa').textContent   = '€ ' + fmt(spesa);
+    document.getElementById('kdp-vendite').textContent = '€ ' + fmt(vendite);
+    const gdEl = document.getElementById('kdp-guadagno');
+    gdEl.textContent = (guadagno >= 0 ? '+ ' : '– ') + '€ ' + fmt(Math.abs(guadagno));
+    gdEl.style.color = guadagno >= 0 ? '#4caf50' : '#d9534f';
+
+    // Semaforo campagne
+    const sem = document.getElementById('kdp-semaforo');
+    if (guadagno >= 0) {
+      sem.textContent = '🟢 Questo mese le ads generano più di quello che costano';
+      sem.style.background = '#e4f6e7';
+      sem.style.color = '#2e7d32';
+    } else {
+      sem.textContent = '🔴 Questo mese la spesa ads supera il guadagno generato di € ' + fmt(Math.abs(guadagno));
+      sem.style.background = '#ffe5e5';
+      sem.style.color = '#c62828';
+    }
+
+    // Blocco 3 — ROI e autofinanziamento
+    const roi = spesa > 0 ? (vendite / spesa) : 0;
+    const roiEl = document.getElementById('kdp-roi');
+    roiEl.textContent = '€ ' + (roi > 0 ? roi.toFixed(2) : '—');
+    roiEl.style.color = roi >= 1 ? '#4caf50' : '#d9534f';
+
+    document.getElementById('kdp-royalties-mese').textContent = '€ ' + fmt(royaltiesMese);
+
+    const autoEl = document.getElementById('kdp-autofinanziamento');
+    if (roi >= 1.5) {
+      autoEl.textContent = '🟢 Sì — le campagne si pagano da sole con margine';
+      autoEl.style.background = '#e4f6e7'; autoEl.style.color = '#2e7d32';
+    } else if (roi >= 1) {
+      autoEl.textContent = '🟡 Quasi — le ads rientrano appena, margine stretto';
+      autoEl.style.background = '#fffde7'; autoEl.style.color = '#f57f17';
+    } else {
+      autoEl.textContent = '🔴 No — stai spendendo più di quello che entra dalle ads';
+      autoEl.style.background = '#ffe5e5'; autoEl.style.color = '#c62828';
+    }
+
+    // Blocco 4 — Posso lanciare?
+    document.getElementById('kdp-spesa-mini').textContent = '– € ' + fmt(spesa);
+    const surplus = KDP_ROYALTIES_FEBBRAIO - spesa;
+    const surplusEl = document.getElementById('kdp-surplus');
+    surplusEl.textContent = '€ ' + fmt(Math.max(0, surplus));
+    surplusEl.style.color = surplus >= 50 ? '#4caf50' : '#d9534f';
+
+    const lancioEl = document.getElementById('kdp-lancio');
+    if (surplus >= 50) {
+      lancioEl.textContent = '🟢 Sì — hai margine per investire 50€ in una nuova campagna';
+      lancioEl.style.background = '#e4f6e7'; lancioEl.style.color = '#2e7d32';
+    } else {
+      lancioEl.textContent = '🔴 No — aspetta che il surplus superi i 50€';
+      lancioEl.style.background = '#ffe5e5'; lancioEl.style.color = '#c62828';
+    }
+
+    // Blocco 5 — Andamento + mini grafico a barre
+    renderKdpChart(rows);
+
+    // Ultimo aggiornamento
+    document.getElementById('kdp-last-update').textContent =
+      '✅ Aggiornato: ' + (d.lastUpdate || '—');
+  }
+
+  function renderKdpChart(rows) {
+    const chartEl = document.getElementById('kdp-chart');
+    const trendEl = document.getElementById('kdp-trend');
+    const tendEl  = document.getElementById('kdp-tendenza');
+    if (!chartEl || rows.length < 2) return;
+
+    // Calcola guadagno giornaliero (differenza tra righe cumulative)
+    const daily = [];
+    for (let i = 0; i < rows.length; i++) {
+      const prev = i === 0 ? { costo: 0, vendite: 0 } : rows[i-1];
+      const r = rows[i];
+      const dCosto   = (r.costo   || 0) - (prev.costo   || 0);
+      const dVendite = (r.vendite || 0) - (prev.vendite || 0);
+      const dGuad    = dVendite * 0.65 - dCosto;
+      daily.push({ data: r.data, guad: dGuad, costo: dCosto });
+    }
+
+    // Mini barre SVG
+    const W = 320, H = 60, pad = 4;
+    const vals = daily.map(d => d.guad);
+    const maxAbs = Math.max(...vals.map(Math.abs), 1);
+    const barW = Math.floor((W - pad * (daily.length + 1)) / daily.length);
+    const mid = H / 2;
+
+    let bars = '';
+    daily.forEach((d, i) => {
+      const x = pad + i * (barW + pad);
+      const barH = Math.abs(d.guad) / maxAbs * (mid - 4);
+      const isPos = d.guad >= 0;
+      const y = isPos ? mid - barH : mid;
+      bars += `<rect x="${x}" y="${y.toFixed(1)}" width="${barW}" height="${barH.toFixed(1)}"
+                fill="${isPos ? '#4caf50' : '#d9534f'}" rx="2" opacity="0.85">
+                <title>${d.data}: ${isPos ? '+' : ''}€ ${d.guad.toFixed(2)}</title></rect>`;
+    });
+
+    chartEl.innerHTML = `
+      <svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;border-radius:6px;background:#f9f9fb;">
+        <line x1="0" y1="${mid}" x2="${W}" y2="${mid}" stroke="#ddd" stroke-width="1"/>
+        ${bars}
+      </svg>
+      <div style="font-size:10px;color:var(--muted);text-align:center;margin-top:2px;">
+        🟢 giorni in positivo &nbsp;|&nbsp; 🔴 giorni in negativo (guadagno netto giornaliero)
+      </div>`;
+
+    // Tendenza ultimi 3 giorni
+    if (daily.length >= 3) {
+      const last3 = daily.slice(-3);
+      const avg3 = last3.reduce((s, d) => s + d.guad, 0) / 3;
+      const prev3 = daily.length >= 6 ? daily.slice(-6, -3).reduce((s, d) => s + d.guad, 0) / 3 : null;
+      let tendTxt = `Media ultimi 3 giorni: <strong>${avg3 >= 0 ? '+' : ''}€ ${avg3.toFixed(2)}/giorno</strong>`;
+      if (prev3 !== null) {
+        const diff = avg3 - prev3;
+        tendTxt += ` &nbsp; ${diff >= 0 ? '↗️ in miglioramento' : '↘️ in peggioramento'} rispetto ai 3 giorni precedenti`;
+      }
+      tendEl.innerHTML = tendTxt;
+    }
+
+    trendEl.innerHTML = `Dati: <strong>${rows.length} giorni</strong> con attività in questo mese`;
+  }
+
+// ─── GESTIONE CATEGORIE ──────────────────────────────────────────────────────
+function renderCategoryDatalist() {
+  const dl = document.getElementById('categories');
+  if (!dl) return;
+  const opts = [];
+  categories.forEach(cat => {
+    opts.push(`<option value="${cat.name}"></option>`);
+    (cat.subs || []).forEach(sub => {
+      opts.push(`<option value="${cat.name} > ${sub}"></option>`);
+    });
+  });
+  dl.innerHTML = opts.join('');
+}
+
+function renderCategoriesPage() {
+  const el = document.getElementById('categories-list');
+  if (!el) return;
+  if (categories.length === 0) {
+    el.innerHTML = '<span class="muted">Nessuna categoria. Aggiungine una.</span>';
+    return;
+  }
+  el.innerHTML = categories.map((cat, i) => {
+    const subsList = (cat.subs || []).map((sub, si) =>
+      `<span style="display:inline-flex;align-items:center;gap:4px;background:#f1f1f5;border-radius:999px;padding:2px 8px;font-size:11px;margin:2px">
+        ${cat.name} &gt; ${sub}
+        <button class="btn-sm btn-danger" style="padding:1px 6px;font-size:10px" onclick="deleteSubcategory(${i},${si})">✕</button>
+      </span>`
+    ).join('');
+    return `<div style="padding:8px 0;border-bottom:1px solid var(--border)">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:4px">
+        <span id="cat-label-${i}" style="flex:1;font-size:13px;font-weight:600">${cat.name}</span>
+        <input type="text" id="cat-edit-${i}" value="${cat.name}" style="flex:1;display:none;margin-bottom:0;font-size:13px">
+        <div style="display:flex;gap:4px">
+          <button class="btn-sm btn-edit" id="cat-btn-edit-${i}" onclick="startEditCategory(${i})">✏️</button>
+          <button class="btn-sm btn-primary" id="cat-btn-save-${i}" style="display:none" onclick="saveEditCategory(${i})">Salva</button>
+          <button class="btn-sm btn-danger" onclick="deleteCategory(${i})">🗑</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:4px">
+        <input type="text" id="subinput-${i}" placeholder="Nuova sottocategoria..." style="flex:1;min-width:120px;max-width:220px;margin-bottom:0;font-size:12px;padding:4px 8px">
+        <button class="btn-sm btn-primary" onclick="addSubcategory(${i})">+ Sub</button>
+      </div>
+      <div>${subsList}</div>
+    </div>`;
+  }).join('');
+}
+
+function addCategory() {
+  const catInput = document.getElementById('new-cat-input');
+  const cat = catInput.value.trim();
+  if (!cat) { alert('Inserisci un nome per la categoria.'); return; }
+  if (categories.some(c => c.name.toLowerCase() === cat.toLowerCase())) {
+    alert('Categoria già esistente.'); return;
+  }
+  categories.push({ name: cat, subs: [] });
+  saveData('mwcategories', categories);
+  catInput.value = '';
+  renderCategoriesPage();
+  renderCategoryDatalist();
+}
+
+function addSubcategory(catIndex) {
+  const input = document.getElementById(`subinput-${catIndex}`);
+  const sub = input ? input.value.trim() : '';
+  if (!sub) { alert('Inserisci il nome della sottocategoria.'); return; }
+  if ((categories[catIndex].subs || []).some(s => s.toLowerCase() === sub.toLowerCase())) {
+    alert('Sottocategoria già esistente.'); return;
+  }
+  if (!categories[catIndex].subs) categories[catIndex].subs = [];
+  categories[catIndex].subs.push(sub);
+  saveData('mwcategories', categories);
+  input.value = '';
+  renderCategoriesPage();
+  renderCategoryDatalist();
+}
+
+function deleteSubcategory(catIndex, subIndex) {
+  if (!confirm(`Eliminare la sottocategoria "${categories[catIndex].subs[subIndex]}"?`)) return;
+  categories[catIndex].subs.splice(subIndex, 1);
+  saveData('mwcategories', categories);
+  renderCategoriesPage();
+  renderCategoryDatalist();
+}
+
+function deleteCategory(i) {
+  if (!confirm(`Eliminare la categoria "${categories[i].name}"?`)) return;
+  categories.splice(i, 1);
+  saveData('mwcategories', categories);
+  renderCategoriesPage();
+  renderCategoryDatalist();
+}
+
+function startEditCategory(i) {
+  document.getElementById(`cat-label-${i}`).style.display = "none";
+  document.getElementById(`cat-edit-${i}`).style.display  = "block";
+  document.getElementById(`cat-btn-edit-${i}`).style.display = "none";
+  document.getElementById(`cat-btn-save-${i}`).style.display = "inline-block";
+}
+
+function saveEditCategory(i) {
+  const val = document.getElementById(`cat-edit-${i}`).value.trim();
+  if (!val) { alert("Il nome non può essere vuoto."); return; }
+  const oldName = categories[i].name;
+  categories[i].name = val;
+  // Aggiorna categoria in tutti i movimenti utente
+  userTransactions.forEach(tx => {
+    if (tx.category && tx.category.toLowerCase().startsWith(oldName.toLowerCase())) {
+      tx.category = tx.category.replace(oldName, val);
+    }
+  });
+  // Aggiorna anche nei precaricati visibili (modifica in-memory per il render)
+  preloadedTransactions.forEach(tx => {
+    if (tx.category && tx.category.toLowerCase().startsWith(oldName.toLowerCase())) {
+      tx.category = tx.category.replace(oldName, val);
+    }
+  });
+  persistAll();
+  saveData('mwcategories', categories);
+  renderCategoriesPage();
+  renderCategoryDatalist();
+  renderAll();
+}
+  // ─── TOGGLE CASSETTA ─────────────────────────────────────────────────────────
+  function toggleCassetta() {
+    cassettaVisible = !cassettaVisible;
+    renderHome();
+  }
+
+  // ─── ELIMINA MOVIMENTO ───────────────────────────────────────────────────────
+  function deleteTransaction(id) {
+    let idx = userTransactions.findIndex(tx => tx.id === id);
+    if (idx === -1) {
+      // Precaricato: nascondilo e rettifica saldo
+      const preTx = preloadedTransactions.find(tx => tx.id === id);
+      if (!preTx) return;
+      if (!confirm(`Eliminare: "${preTx.description || preTx.category}" – € ${fmt(preTx.amount)}?`)) return;
+      if (!hiddenPreloaded.includes(id)) hiddenPreloaded.push(id);
+      saveData("mw_hidden_preloaded", hiddenPreloaded);
+      if (accounts[preTx.accountId]) {
+        if (preTx.type === "income") accounts[preTx.accountId].balance -= preTx.amount;
+        else accounts[preTx.accountId].balance += preTx.amount;
+      }
+      persistAll();
+      renderAll();
+      return;
+    }
+    const tx = userTransactions[idx];
+    if (!confirm(`Eliminare: "${tx.description || tx.category}" – € ${fmt(tx.amount)}?`)) return;
+    if (accounts[tx.accountId]) {
+      if (tx.type === "income") accounts[tx.accountId].balance -= tx.amount;
+      else accounts[tx.accountId].balance += tx.amount;
+    }
+    userTransactions.splice(idx, 1);
+    persistAll(null, id);
+    renderAll();
+  }
+
+  // ─── APRI MODALE MODIFICA ────────────────────────────────────────────────────
+  function openEditModal(id) {
+    const tx = allTransactions().find(t => t.id === id);
+    if (!tx) return;
+    document.getElementById("edit-tx-id").value       = id;
+    document.getElementById("edit-tx-date").value     = tx.date;
+    document.getElementById("edit-tx-account").value  = tx.accountId;
+    document.getElementById("edit-tx-type").value     = tx.type;
+    document.getElementById("edit-tx-category").value = tx.category || "";
+    document.getElementById("edit-tx-amount").value   = tx.amount;
+    document.getElementById("edit-tx-note").value     = tx.description || "";
+    document.getElementById("edit-modal-overlay").classList.add("open");
+  }
+
+  function closeEditModal() {
+    document.getElementById("edit-modal-overlay").classList.remove("open");
+  }
+
+  function saveEditModal() {
+    const id          = document.getElementById("edit-tx-id").value;
+    const newDate     = document.getElementById("edit-tx-date").value;
+    const newAccount  = document.getElementById("edit-tx-account").value;
+    const newType     = document.getElementById("edit-tx-type").value;
+    const newCategory = document.getElementById("edit-tx-category").value;
+    const newAmount   = Number(document.getElementById("edit-tx-amount").value || 0);
+    const newNote     = document.getElementById("edit-tx-note").value;
+
+    if (!newDate || !newAccount || !newType || !newAmount) {
+      alert("Compila tutti i campi obbligatori.");
+      return;
+    }
+
+    let idx = userTransactions.findIndex(tx => tx.id === id);
+
+    if (idx === -1) {
+      // Movimento precaricato: calcola differenza saldi
+      const preTx = preloadedTransactions.find(tx => tx.id === id);
+      if (!preTx) return;
+      // Annulla effetto del precaricato sui saldi
+      if (accounts[preTx.accountId]) {
+        if (preTx.type === "income") accounts[preTx.accountId].balance -= preTx.amount;
+        else accounts[preTx.accountId].balance += preTx.amount;
+      }
+      // Applica nuovo effetto
+      if (accounts[newAccount]) {
+        if (newType === "income") accounts[newAccount].balance += newAmount;
+        else accounts[newAccount].balance -= newAmount;
+      }
+      // Nascondi il precaricato originale e aggiungi versione modificata
+      if (!hiddenPreloaded.includes(id)) hiddenPreloaded.push(id);
+      saveData("mw_hidden_preloaded", hiddenPreloaded);
+      const newTx = { ...preTx, date: newDate, accountId: newAccount, type: newType,
+        category: newCategory, amount: newAmount, description: newNote,
+        isPreloaded: false, id: "edit_" + id };
+      userTransactions.push(newTx);
+      persistAll(newTx);
+      closeEditModal();
+      renderAll();
+      return;
+    }
+
+    const oldTx = userTransactions[idx];
+    if (accounts[oldTx.accountId]) {
+      if (oldTx.type === "income") accounts[oldTx.accountId].balance -= oldTx.amount;
+      else accounts[oldTx.accountId].balance += oldTx.amount;
+    }
+    if (accounts[newAccount]) {
+      if (newType === "income") accounts[newAccount].balance += newAmount;
+      else accounts[newAccount].balance -= newAmount;
+    }
+    userTransactions[idx] = { ...oldTx, date: newDate, accountId: newAccount,
+      type: newType, category: newCategory, amount: newAmount, description: newNote };
+    persistAll(userTransactions[idx]);
+    closeEditModal();
+    renderAll();
+  }
+
+  // ─── FORM NUOVO MOVIMENTO ────────────────────────────────────────────────────
+  function initNewTxForm() {
+    const form      = document.getElementById("new-tx-form");
+    const dateInput = document.getElementById("tx-date");
+    dateInput.value = new Date().toISOString().slice(0, 10);
+
+    // Popola select spese fisse
+    const sel = document.getElementById("tx-fixed");
+    fixedExpensesConfig.filter(cfg => !cfg.isIncome).forEach(cfg => {
+      const opt = document.createElement("option");
+      opt.value       = cfg.id;
+      opt.textContent = cfg.name;
+      sel.appendChild(opt);
+    });
+
+    form.addEventListener("submit", e => {
+      e.preventDefault();
+      const date      = dateInput.value;
+      const accountId = document.getElementById("tx-account").value;
+      const type      = document.getElementById("tx-type").value;
+      const category  = document.getElementById("tx-category").value;
+      const amount    = Number(document.getElementById("tx-amount").value || 0);
+      const note      = document.getElementById("tx-note").value;
+      const fixedId   = document.getElementById("tx-fixed").value;
+
+      if (!date || !accountId || !type || amount <= 0) {
+        alert("Compila tutti i campi obbligatori con un importo valido.");
+        return;
+      }
+
+      const tx = {
+        id: "utx_" + Date.now(),
+        date,
+        accountId,
+        type,
+        category,
+        amount,
+        description: note,
+        isPreloaded: false,
+        isFixedExpenseInstance: !!fixedId
+      };
+
+      userTransactions.push(tx);
+
+      if (accounts[accountId]) {
+        if (type === "income") accounts[accountId].balance += amount;
+        else accounts[accountId].balance -= amount;
+      }
+
+      persistAll(tx);
+      form.reset();
+      dateInput.value = new Date().toISOString().slice(0, 10);
+      renderAll();
+      alert("✅ Movimento salvato.");
+    });
+  }
+
+  // ─── KDP REFRESH ─────────────────────────────────────────────────────────────
+  const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby6vyau0LEO3LHID5ERtNYNQjRuv0bkzvKDnI-LBaiVeNMBUXTVCzFILbfswoIFRHSJ/exec";
+const APPSSCRIPTURL = APPS_SCRIPT_URL; // ← incolla qui il tuo Google Apps Script Web App URL
+
+  async function fetchKdpFromSheets() {
+    try {
+      document.getElementById('kdp-last-update').textContent = '⏳ Caricamento...';
+      document.getElementById('kdp-refresh-btn').disabled = true;
+
+      // Legge il foglio RIEPILOGO MENSILE via Apps Script
+      // Il parametro action=kdp dice all'Apps Script di restituire i dati KDP
+      const res = await fetch(APPS_SCRIPT_URL + '?action=kdp');
+      const json = await res.json();
+
+      // Formato atteso dal Apps Script:
+      // { rows: [ { data, costo, vendite, guadagno, royalties }, ... ] }
+      // data = "26/04/2026", costo = cumul spesa, vendite = cumul vendite,
+      // guadagno = cumul guadagno previsto, royalties = cumul royalties KDP col E
+
+      if (json && json.rows) {
+        kdpData = {
+          rows: json.rows,
+          lastUpdate: new Date().toLocaleString('it-IT')
+        };
+        saveData('mwkdp', kdpData);
+        renderKdp();
+      } else {
+        document.getElementById('kdp-last-update').textContent = '⚠️ Risposta non valida dal server';
+      }
+    } catch(e) {
+      console.warn('fetchKdpFromSheets error:', e);
+      document.getElementById('kdp-last-update').textContent = '❌ Connessione fallita — riprova';
+    } finally {
+      const btn = document.getElementById('kdp-refresh-btn');
+      if (btn) btn.disabled = false;
+    }
+  }
+
+  function refreshKdp() {
+    fetchKdpFromSheets();
+  }
+
+  function initKdpRefresh() {
+    // Carica all'avvio se siamo sulla pagina KDP, altrimenti al primo click
+    fetchKdpFromSheets();
+  }
+
+  // ─── TABS ────────────────────────────────────────────────────────────────────
+  function initTabs() {
+    const buttons = document.querySelectorAll(".tab-btn");
+    const pageIds = { home: "page-home", new: "page-new", tx: "page-tx", fixed: "page-fixed", categories: "page-categories", kdp: "page-kdp" };
+    buttons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        buttons.forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        const target = btn.dataset.page;
+        Object.entries(pageIds).forEach(([key, id]) => {
+          document.getElementById(id).classList.toggle("active", key === target);
+        });
+      });
+    });
+  }
+
+  // ─── PERSIST & RENDER ALL ────────────────────────────────────────────────────
+  function persistAll(changedTx=null, deletedTxId=null) {
+    saveData("mw_accounts", accounts);
+    saveData("mw_user_transactions", userTransactions);
+    saveData("mw_kdp", kdpData);
+    // Sync to Google Sheets
+    if (changedTx) sheetsSaveMovement(changedTx);
+    if (deletedTxId) sheetsDeleteMovement(deletedTxId);
+    sheetsUpdateSaldi();
+  }
+
+  function renderAll() {
+  renderHome();
+  renderTransactions();
+  renderFixedExpenses();
+  renderKdp();
+  renderCategoriesPage();
+  renderCategoryDatalist();
+}
+
+  // ─── INIT ────────────────────────────────────────────────────────────────────
+  document.getElementById("edit-cancel-btn").addEventListener("click", closeEditModal);
+  document.getElementById("edit-save-btn").addEventListener("click", saveEditModal);
+  document.getElementById("edit-modal-overlay").addEventListener("click", e => {
+    if (e.target === document.getElementById("edit-modal-overlay")) closeEditModal();
+  });
+
+  initTabs();
+  initNewTxForm();
+  initKdpRefresh();
+
+  // Carica da Google Sheets all'avvio
+  // sheetsLoad all'avvio disabilitato — ricollegare in seguito
+const statusEl = document.getElementById('sheets-status');
+if (statusEl) statusEl.textContent = 'Offline — dati locali';
+renderCategoryDatalist();
+autoInsertPensione();
+renderAll();
+</script>
+</body>
+</html>
