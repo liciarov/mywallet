@@ -1411,8 +1411,11 @@ function renderCategoriesPage() {
     el.innerHTML = '<span class="muted">Nessuna categoria. Aggiungine una.</span>';
     return;
   }
-  const sorted = [...categories].sort((a, b) => a.name.localeCompare(b.name));
-el.innerHTML = sorted.map((cat, i) => {
+  const sorted = categories
+  .map((cat, origIndex) => ({ ...cat, _origIndex: origIndex }))
+  .sort((a, b) => a.name.localeCompare(b.name));
+el.innerHTML = sorted.map((cat) => {
+  const i = cat._origIndex;
     const subsList = (cat.subs || []).map((sub, si) =>
       `<span style="display:inline-flex;align-items:center;gap:4px;background:#f1f1f5;border-radius:999px;padding:2px 8px;font-size:11px;margin:2px">
         ${cat.name} &gt; ${sub}
