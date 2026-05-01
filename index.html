@@ -1411,11 +1411,12 @@ function renderCategoriesPage() {
     el.innerHTML = '<span class="muted">Nessuna categoria. Aggiungine una.</span>';
     return;
   }
-  const sorted = categories
-  .map((cat, origIndex) => ({ ...cat, _origIndex: origIndex }))
-  .sort((a, b) => a.name.localeCompare(b.name));
-el.innerHTML = sorted.map((cat) => {
-  const i = cat._origIndex;
+  // Ordina solo per la visualizzazione, senza toccare l'array originale
+  const sorted = [...categories].sort((a, b) => a.name.localeCompare(b.name));
+
+  el.innerHTML = sorted.map((cat) => {
+    // Cerca sempre l'indice reale nell'array originale per nome
+    const i = categories.findIndex(c => c.name === cat.name);
     const subsList = (cat.subs || []).map((sub, si) =>
       `<span style="display:inline-flex;align-items:center;gap:4px;background:#f1f1f5;border-radius:999px;padding:2px 8px;font-size:11px;margin:2px">
         ${cat.name} &gt; ${sub}
@@ -1449,7 +1450,6 @@ function addCategory() {
     alert('Categoria già esistente.'); return;
   }
   categories.push({ name: cat, subs: [] });
-  categories.sort((a, b) => a.name.localeCompare(b.name));
   saveData('mwcategories', categories);
   catInput.value = '';
   renderCategoriesPage();
