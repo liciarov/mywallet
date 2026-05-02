@@ -1011,27 +1011,31 @@ if (categories.length > 0 && typeof categories[0] === 'string') {
       </div>
     `;
 
-    // — Movimenti mese (solo nuovi dell'utente) —
+    // — Movimenti mese (escluse Ads) —
     const moDiv = document.getElementById("month-overview");
-    if (userMonthTx.length === 0) {
+    const userMonthNoAds = userMonthTx.filter(tx =>
+      (tx.category || '').toLowerCase() !== 'ads'
+    );
+    const incomeNoAds  = userMonthNoAds.filter(tx => tx.type === "income").reduce((s,tx) => s + tx.amount, 0);
+    const expenseNoAds = userMonthNoAds.filter(tx => tx.type === "expense").reduce((s,tx) => s + tx.amount, 0);
+    if (userMonthNoAds.length === 0) {
       moDiv.innerHTML = `
         <div class="info-tile color-indigo">
           <span class="tile-label">📋 Movimenti del Mese</span>
           <span class="tile-value">0</span>
-          <span class="tile-sub">Nessun nuovo movimento</span>
+          <span class="tile-sub">Nessun movimento (escluse Ads)</span>
         </div>`;
     } else {
-      const netUser = disponibile - userExpenses;
-      const netClass = netUser >= 0 ? "positive" : "negative";
+      const netNoAds = incomeNoAds - expenseNoAds;
       moDiv.innerHTML = `
         <div class="info-tile color-indigo">
           <span class="tile-label">📋 Movimenti del Mese</span>
-          <span class="tile-value">${userMonthTx.length}</span>
-          <span class="tile-sub">▲ € ${fmt(userIncome)} &nbsp;|&nbsp; ▼ € ${fmt(userExpenses)}</span>
-          <span class="tile-sub">Saldo: <strong style="color:${netUser>=0?'#c4f0ff':'#ffd6d6'};">€ ${fmt(netUser)}</strong></span>
+          <span class="tile-value">${userMonthNoAds.length}</span>
+          <span class="tile-sub">▲ € ${fmt(incomeNoAds)} &nbsp;|&nbsp; ▼ € ${fmt(expenseNoAds)}</span>
+          <span class="tile-sub">Saldo: <strong style="color:${netNoAds>=0?'#c4f0ff':'#ffd6d6'};">€ ${fmt(netNoAds)}</strong></span>
         </div>`;
     }
-
+    
     // — Spese fisse —
     const fixedDiv = document.getElementById("fixed-overview");
     const pendingList = fixedExpensesConfig.filter(cfg => !cfg.isIncome && !isFixedPaid(cfg.id, currentMonth));
