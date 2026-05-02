@@ -576,14 +576,14 @@
       <div style="font-size:13px;font-weight:700;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px;">📬 Royalties in arrivo</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
         <div style="padding:10px;background:#f0fff4;border-radius:8px;">
-          <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">💶 Marzo → pagamento ora</div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">💶 Marzo → pagamento maggio</div>
           <div style="font-size:18px;font-weight:700;color:#4caf50;">€ 715</div>
           <div style="font-size:10px;color:var(--muted);">già accreditate o in arrivo</div>
         </div>
         <div style="padding:10px;background:#f0f7ff;border-radius:8px;">
           <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">📅 Aprile → pagamento giugno</div>
-          <div style="font-size:18px;font-weight:700;color:var(--accent);">€ —</div>
-          <div style="font-size:10px;color:var(--muted);">da confermare</div>
+          <div id="kdp-royalties-aprile" style="font-size:18px;font-weight:700;color:var(--accent);">€ —</div>
+          <div style="font-size:10px;color:var(--muted);">da movimenti aprile</div>
         </div>
       </div>
       <div style="font-size:11px;color:var(--muted);padding:8px;background:#f9f9fb;border-radius:6px;">
@@ -615,8 +615,8 @@
       <div style="font-size:11px;color:var(--muted);margin-bottom:8px;">Lancio = 50€ tuoi + campagna deve autoalimentarsi</div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px;">
         <div style="padding:8px;background:#f9f9fb;border-radius:8px;text-align:center;">
-          <div style="font-size:10px;color:var(--muted);">Feb. in tasca</div>
-          <div style="font-size:15px;font-weight:700;color:#4caf50;">€ 540</div>
+          <div style="font-size:10px;color:var(--muted);">Mar. in tasca</div>
+          <div style="font-size:15px;font-weight:700;color:#4caf50;">€ 715</div>
         </div>
         <div style="padding:8px;background:#f9f9fb;border-radius:8px;text-align:center;">
           <div style="font-size:10px;color:var(--muted);">Spesa ads mese</div>
@@ -1274,8 +1274,8 @@ const palette = cats.map(([label]) => {
   // ─── RENDER KDP ───────────────────────────────────────────────────────────────
   // Cambio fisso: 1 USD = 0.93 EUR, 1 CAD = 0.69 EUR, 1 MXN = 0.046 EUR
   // Royalties KDP da report ufficiali (aggiornare manualmente se cambiano):
-  const KDP_ROYALTIES_FEBBRAIO = 540;  // pagamento aprile — già in tasca
-  const KDP_ROYALTIES_MARZO    = 715;  // pagamento maggio — confermato
+  const KDP_ROYALTIES_MARZO  = 715;   // pagamento maggio — in arrivo
+  const KDP_ROYALTIES_APRILE = 0;     // pagamento giugno — da movimenti
 
   function renderKdp() {
     const d = kdpData;
@@ -1319,6 +1319,12 @@ const palette = cats.map(([label]) => {
       sem.style.color = '#c62828';
     }
 
+    const royApr = userTransactions
+      .filter(tx => tx.date.startsWith('2026-04') && (tx.category || '').toLowerCase() === 'royalties kdp ricevute' && tx.type === 'income')
+      .reduce((s, tx) => s + tx.amount, 0);
+    const royAprEl = document.getElementById('kdp-royalties-aprile');
+    if (royAprEl) royAprEl.textContent = '€ ' + fmt(royApr);
+
     // Blocco 3 — ROI e autofinanziamento
     const roi = spesa > 0 ? (vendite / spesa) : 0;
     const roiEl = document.getElementById('kdp-roi');
@@ -1341,7 +1347,7 @@ const palette = cats.map(([label]) => {
 
     // Blocco 4 — Posso lanciare?
     document.getElementById('kdp-spesa-mini').textContent = '– € ' + fmt(spesa);
-    const surplus = KDP_ROYALTIES_FEBBRAIO - spesa;
+    const surplus = KDP_ROYALTIES_MARZO - spesa;
     const surplusEl = document.getElementById('kdp-surplus');
     surplusEl.textContent = '€ ' + fmt(Math.max(0, surplus));
     surplusEl.style.color = surplus >= 50 ? '#4caf50' : '#d9534f';
