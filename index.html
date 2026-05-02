@@ -672,7 +672,7 @@
 
 <script>
   // ─── COSTANTI ───────────────────────────────────────────────────────────────
-  const currentMonth = "2026-04";
+  const currentMonth = new Date().toISOString().slice(0, 7);
   let categories = loadData('mwcategories', [
   { name: 'Abbigliamento', subs: [] },
   { name: 'Abbonamenti', subs: [] },
