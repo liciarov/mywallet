@@ -1319,11 +1319,8 @@ const palette = cats.map(([label]) => {
       sem.style.color = '#c62828';
     }
 
-    const royApr = userTransactions
-      .filter(tx => tx.date.startsWith('2026-04') && (tx.category || '').toLowerCase() === 'royalties kdp ricevute' && tx.type === 'income')
-      .reduce((s, tx) => s + tx.amount, 0);
     const royAprEl = document.getElementById('kdp-royalties-aprile');
-    if (royAprEl) royAprEl.textContent = '€ ' + fmt(royApr);
+    if (royAprEl) royAprEl.textContent = royaltiesMese > 0 ? '€ ' + fmt(royaltiesMese) : '—';
 
     // Blocco 3 — ROI e autofinanziamento
     const roi = spesa > 0 ? (vendite / spesa) : 0;
