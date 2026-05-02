@@ -465,7 +465,10 @@
     <div class="card">
       <h2>Movimenti — <span id="tx-month-label"></span></h2>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;align-items:center;">
-        <span style="font-size:12px;color:var(--muted);">Filtra per conto:</span>
+        <button class="btn-outline btn-sm" onclick="changeViewMonth(-1)">◀</button>
+        <span id="tx-month-nav" style="font-size:13px;font-weight:600;min-width:120px;text-align:center;"></span>
+        <button class="btn-outline btn-sm" onclick="changeViewMonth(1)">▶</button>
+        <span style="font-size:12px;color:var(--muted);margin-left:8px;">Conto:</span>
         <select id="tx-filter-account" onchange="renderTransactions()" style="width:auto;margin-bottom:0;font-size:12px;padding:4px 8px;">
           <option value="">Tutti</option>
           <option value="bank">Banca</option>
@@ -673,6 +676,7 @@
 <script>
   // ─── COSTANTI ───────────────────────────────────────────────────────────────
   const currentMonth = new Date().toISOString().slice(0, 7);
+  let viewMonth = currentMonth; // mese visualizzato nella pagina Movimenti
   let categories = loadData('mwcategories', [
   { name: 'Abbigliamento', subs: [] },
   { name: 'Abbonamenti', subs: [] },
@@ -984,7 +988,7 @@ if (categories.length > 0 && typeof categories[0] === 'string') {
       <div class="info-tile color-teal">
         <span class="tile-label">🔒 Capitale Intoccabile</span>
         <span class="tile-value" style="font-size:14px;font-weight:600;">€ ${fmt(threshold)}</span>
-        <span class="tile-sub" style="font-size:24px;">Saldo banca: € ${fmt(accounts.bank.balance)}</span>
+        <span class="tile-sub" style="font-size:14px;">Saldo banca: € ${fmt(accounts.bank.balance)}</span>
         <span class="tile-sub">Margine: <strong style="font-size:24px;color:${margin>=0?'#b6ffd8':'#ffd6d6'};">€ ${fmt(margin)}</strong></span>
         ${margin < 0 ? `<div class="tile-alert">⚠️ Sotto soglia di € ${fmt(Math.abs(margin))}</div>` : ''}
       </div>
@@ -1093,21 +1097,28 @@ if (categories.length > 0 && typeof categories[0] === 'string') {
 
   // ─── RENDER MOVIMENTI ─────────────────────────────────────────────────────────
   let pieChartInstance = null;
+  function changeViewMonth(delta) {
+    const [y, m] = viewMonth.split('-').map(Number);
+    const d = new Date(y, m - 1 + delta, 1);
+    viewMonth = d.toISOString().slice(0, 7);
+    renderTransactions();
+  }
 
   function renderTransactions() {
     const monthLabel = document.getElementById('tx-month-label');
-if (monthLabel) {
-  const [y, m] = currentMonth.split('-');
-  const nome = new Date(y, m-1).toLocaleString('it-IT', { month: 'long', year: 'numeric' });
-  monthLabel.textContent = nome.charAt(0).toUpperCase() + nome.slice(1);
-}
+    const monthNav   = document.getElementById('tx-month-nav');
+    const [y, m] = viewMonth.split('-');
+    const nome = new Date(y, m-1).toLocaleString('it-IT', { month: 'long', year: 'numeric' });
+    const nomeFormatted = nome.charAt(0).toUpperCase() + nome.slice(1);
+    if (monthLabel) monthLabel.textContent = nomeFormatted;
+    if (monthNav)   monthNav.textContent   = nomeFormatted;
     const tbody = document.getElementById("tx-table-body");
     const filterAccount = document.getElementById("tx-filter-account")?.value || "";
     const all = allTransactions().filter(tx =>
-      tx.date.startsWith(currentMonth) &&
+      tx.date.startsWith(viewMonth) &&
       (!filterAccount || tx.accountId === filterAccount)
     );
-    document.getElementById("tx-count").textContent = `${all.length} movimento/i nel mese ${currentMonth}`;
+    document.getElementById("tx-count").textContent = `${all.length} movimento/i nel mese ${viewMonth}`;
 
     // Totali filtrati
     const totIncome  = all.filter(t => t.type === "income").reduce((s,t) => s + t.amount, 0);
