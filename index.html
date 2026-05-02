@@ -1441,7 +1441,6 @@ function renderCategoriesPage() {
     </div>`;
   }).join('');
 }
-
 function addCategory() {
   const catInput = document.getElementById('new-cat-input');
   const cat = catInput.value.trim();
@@ -1498,6 +1497,17 @@ function saveEditCategory(i) {
   const val = document.getElementById(`cat-edit-${i}`).value.trim();
   if (!val) { alert("Il nome non può essere vuoto."); return; }
   const oldName = categories[i].name;
+  if (oldName === val) {
+    // Nessuna modifica reale, chiudi solo l'editor
+    document.getElementById(`cat-label-${i}`).style.display = "block";
+    document.getElementById(`cat-edit-${i}`).style.display  = "none";
+    document.getElementById(`cat-btn-edit-${i}`).style.display = "inline-block";
+    document.getElementById(`cat-btn-save-${i}`).style.display = "none";
+    return;
+  }
+  if (categories.some((c, idx) => idx !== i && c.name.toLowerCase() === val.toLowerCase())) {
+    alert("Esiste già una categoria con questo nome."); return;
+  }
   categories[i].name = val;
   // Aggiorna categoria in tutti i movimenti utente
   userTransactions.forEach(tx => {
