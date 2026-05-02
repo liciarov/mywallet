@@ -863,7 +863,6 @@ if (categories.length > 0 && typeof categories[0] === 'string') {
   { id: "fx_sostentamento",  name: "Sostentamento",        defaultAmount: 330,   category: "Sostentamento", accountId: "bank",     variableAmount: false },
     { id: "fx_netflix",        name: "Netflix",              defaultAmount: 13.99, category: "Abbonamenti",   accountId: "postepay", variableAmount: false },
     { id: "fx_audible",        name: "Audible",              defaultAmount: 9.99,  category: "Abbonamenti",   accountId: "postepay", variableAmount: false },
-    { id: "fx_freepik",        name: "Freepik",              defaultAmount: 9.76,  category: "Abbonamenti",   accountId: "postepay", variableAmount: false },
     { id: "fx_prime_video",    name: "Prime Video ad-free",  defaultAmount: 1.99,  category: "Abbonamenti",   accountId: "postepay", variableAmount: false },
     { id: "fx_prime",          name: "Amazon Prime",         defaultAmount: 4.99,  category: "Abbonamenti",   accountId: "postepay", variableAmount: false },
     { id: "fx_canone_conto",   name: "Canone conto",         defaultAmount: 0.35,  category: "Banca/commissioni", accountId: "bank", variableAmount: false },
@@ -1023,7 +1022,7 @@ if (categories.length > 0 && typeof categories[0] === 'string') {
           <span class="tile-sub">Nessun nuovo movimento</span>
         </div>`;
     } else {
-      const netUser = userIncome - userExpenses;
+      const netUser = disponibile - userExpenses;
       const netClass = netUser >= 0 ? "positive" : "negative";
       moDiv.innerHTML = `
         <div class="info-tile color-indigo">
