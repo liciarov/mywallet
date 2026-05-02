@@ -1099,8 +1099,11 @@ if (categories.length > 0 && typeof categories[0] === 'string') {
   let pieChartInstance = null;
   function changeViewMonth(delta) {
     const [y, m] = viewMonth.split('-').map(Number);
-    const d = new Date(y, m - 1 + delta, 1);
-    viewMonth = d.toISOString().slice(0, 7);
+    const newM = m + delta;
+    const d = new Date(y, newM - 1, 1);
+    const yy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    viewMonth = `${yy}-${mm}`;
     renderTransactions();
   }
 
