@@ -1053,28 +1053,23 @@ if (categories.length > 0 && typeof categories[0] === 'string') {
 
     // — Ads / KDP — tile home
     const adsDiv = document.getElementById("ads-overview");
+    const adsFatturate = userMonthTx
+      .filter(tx => (tx.category || '').toLowerCase() === 'ads' && tx.type === "expense")
+      .reduce((s, tx) => s + tx.amount, 0);
     const kd = kdpData;
-    if (kd && kd.rows && kd.rows.length > 0) {
-      const lastRow = kd.rows.filter(r => r.costo > 0 || r.vendite > 0).slice(-1)[0];
-      if (lastRow) {
-        const gd = lastRow.guadagno || 0;
-        const gdColor = gd >= 0 ? '#c4f0ff' : '#ffd6d6';
-        adsDiv.innerHTML = `
-          <div class="info-tile color-orange" onclick="document.querySelector('[data-page=kdp]').click()" style="cursor:pointer;">
-            <span class="tile-label">📈 KDP / Ads</span>
-            <span class="tile-value" style="font-size:14px;">€ ${fmt(lastRow.spesa || lastRow.costo || 0)} spesi</span>
-            <span class="tile-sub">Vendite: € ${fmt(lastRow.vendite || 0)}</span>
-            <span class="tile-sub">Netto: <strong style="color:${gdColor};">${gd >= 0 ? '+' : ''}€ ${fmt(gd)}</strong></span>
-          </div>`;
-      }
-    } else {
-      adsDiv.innerHTML = `
-        <div class="info-tile color-orange" onclick="document.querySelector('[data-page=kdp]').click()" style="cursor:pointer;">
-          <span class="tile-label">📈 KDP / Ads</span>
-          <span class="tile-value" style="font-size:14px;">—</span>
-          <span class="tile-sub">Vai su KDP per aggiornare</span>
-        </div>`;
-    }
+    const lastRow = (kd && kd.rows) ? kd.rows.filter(r => r.costo > 0 || r.vendite > 0).slice(-1)[0] : null;
+    const inCorso = lastRow?.costo || null;
+    const vendite = lastRow?.vendite || 0;
+    const guadagno = lastRow?.guadagno || 0;
+    const gdColor = guadagno >= 0 ? '#c4f0ff' : '#ffd6d6';
+    adsDiv.innerHTML = `
+      <div class="info-tile color-orange" onclick="document.querySelector('[data-page=kdp]').click()" style="cursor:pointer;">
+        <span class="tile-label">📈 KDP / Ads</span>
+        <span class="tile-sub">🧾 Fatture pagate: <strong style="color:#fff;">€ ${fmt(adsFatturate)}</strong></span>
+        <span class="tile-sub">⚡ In corso su Amazon: <strong style="color:#fff;">${inCorso !== null ? '€ ' + fmt(inCorso) : '—'}</strong></span>
+        <span class="tile-sub">🛒 Vendite: € ${fmt(vendite)}</span>
+        <span class="tile-sub">Netto: <strong style="color:${gdColor};">${guadagno >= 0 ? '+' : ''}€ ${fmt(guadagno)}</strong></span>
+      </div>`;
   }
 
   // ─── RENDER SPESE FISSE ───────────────────────────────────────────────────────
