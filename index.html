@@ -476,6 +476,10 @@
           <option value="cash">Contanti</option>
           <option value="cassetta">Cassetta</option>
         </select>
+        <span style="font-size:12px;color:var(--muted);margin-left:8px;">Categoria:</span>
+        <select id="tx-filter-category" onchange="renderTransactions()" style="width:auto;margin-bottom:0;font-size:12px;padding:4px 8px;">
+          <option value="">Tutte</option>
+        </select>
       </div>
       <div class="small muted" id="tx-count"></div>
       <div id="tx-totals" style="margin:6px 0 10px;display:flex;gap:16px;flex-wrap:wrap;font-size:12px;"></div>
@@ -1112,11 +1116,24 @@ if (categories.length > 0 && typeof categories[0] === 'string') {
     if (monthLabel) monthLabel.textContent = nomeFormatted;
     if (monthNav)   monthNav.textContent   = nomeFormatted;
     const tbody = document.getElementById("tx-table-body");
-    const filterAccount = document.getElementById("tx-filter-account")?.value || "";
+    const filterAccount  = document.getElementById("tx-filter-account")?.value || "";
+    const filterCategory = document.getElementById("tx-filter-category")?.value || "";
     const all = allTransactions().filter(tx =>
       tx.date.startsWith(viewMonth) &&
-      (!filterAccount || tx.accountId === filterAccount)
+      (!filterAccount  || tx.accountId === filterAccount) &&
+      (!filterCategory || (tx.category || '').toLowerCase() === filterCategory.toLowerCase())
     );
+    const catSel = document.getElementById("tx-filter-category");
+    if (catSel) {
+      const currentCatFilter = catSel.value;
+      const allCats = [...new Set(
+        allTransactions()
+          .filter(tx => tx.date.startsWith(viewMonth) && tx.category)
+          .map(tx => tx.category)
+      )].sort();
+      catSel.innerHTML = '<option value="">Tutte</option>' +
+        allCats.map(c => `<option value="${c}" ${c === currentCatFilter ? 'selected' : ''}>${c}</option>`).join('');
+    }
     document.getElementById("tx-count").textContent = `${all.length} movimento/i nel mese ${viewMonth}`;
 
     // Totali filtrati
