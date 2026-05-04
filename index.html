@@ -573,12 +573,12 @@
 
     <!-- BLOCCO 2: Cosa arriva a fine mese? -->
     <div class="card" style="margin-bottom:12px;">
-      <div style="font-size:13px;font-weight:700;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px;">📬 Royalties in arrivo</div>
+      <div style="font-size:13px;font-weight:700;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px;">📬 Royalties a fine mese</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
         <div style="padding:10px;background:#f0fff4;border-radius:8px;">
           <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">💶 Marzo → pagamento maggio</div>
           <div style="font-size:18px;font-weight:700;color:#4caf50;">€ 715</div>
-          <div style="font-size:10px;color:var(--muted);">già accreditate o in arrivo</div>
+          <div style="font-size:10px;color:var(--muted);">a fine mese</div>
         </div>
         <div style="padding:10px;background:#f0f7ff;border-radius:8px;">
           <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">📅 Aprile → pagamento giugno</div>
@@ -586,9 +586,7 @@
           <div style="font-size:10px;color:var(--muted);">da movimenti aprile</div>
         </div>
       </div>
-      <div style="font-size:11px;color:var(--muted);padding:8px;background:#f9f9fb;border-radius:6px;">
-        💡 Le royalties previste nella colonna E del tuo foglio sono quelle che <em>stai maturando</em> questo mese — arriveranno in giugno.
-      </div>
+      
     </div>
 
     <!-- BLOCCO 3: Le campagne si pagano da sole? -->
@@ -869,6 +867,7 @@ if (categories.length > 0 && typeof categories[0] === 'string') {
     { id: "fx_prime_video",    name: "Prime Video ad-free",  defaultAmount: 1.99,  category: "Abbonamenti",   accountId: "postepay", variableAmount: false },
     { id: "fx_prime",          name: "Amazon Prime",         defaultAmount: 4.99,  category: "Abbonamenti",   accountId: "postepay", variableAmount: false },
     { id: "fx_canone_conto",   name: "Canone conto",         defaultAmount: 0.35,  category: "Banca/commissioni", accountId: "bank", variableAmount: false },
+    { id: "fx_canone_carta",   name: "Canone carta",         defaultAmount: 1.25,  category: "Banca/commissioni", accountId: "bank", variableAmount: false },
     { id: "fx_sim", name: "Ricarica SIM", defaultAmount: 10, category: "Telefonia", accountId: "postepay", variableAmount: true },
     { id: "fx_perplexity", name: "Perplexity.AI", defaultAmount: 20.82, category: "Tecnologia", accountId: "postepay", variableAmount: false },
     { id: "fx_perplexity_comm", name: "Commissione Perplexity", defaultAmount: 0.23, category: "Banca/commissioni", accountId: "postepay", variableAmount: true },
@@ -884,7 +883,8 @@ if (categories.length > 0 && typeof categories[0] === 'string') {
     fx_freepik:       tx => tx.accountId === "postepay" && tx.type === "expense" && tx.description.toLowerCase().includes("freepik"),
     fx_prime_video:   tx => tx.accountId === "postepay" && tx.type === "expense" && tx.description.toLowerCase().includes("prime video"),
     fx_prime:         tx => tx.accountId === "postepay" && tx.type === "expense" && tx.description.toLowerCase().includes("amazon prime"),
-    fx_canone_conto:  tx => tx.accountId === "bank"     && tx.type === "expense" && tx.description.toLowerCase().includes("canone conto"),
+    fx_canone_conto:  tx => tx.accountId === "bank" && tx.type === "expense" && tx.description.toLowerCase().includes("canone conto"),
+    fx_canone_carta:  tx => tx.accountId === "bank" && tx.type === "expense" && tx.description.toLowerCase().includes("canone carta"),
     fx_sim: tx => tx.accountId === "postepay" && tx.type === "expense" && tx.category === "telefonia",
     fx_perplexity:      tx => tx.accountId === "postepay" && tx.type === "expense" && tx.description.toLowerCase().includes("perplexity") && !tx.description.toLowerCase().includes("commissi"),
     fx_perplexity_comm: tx => tx.accountId === "postepay" && tx.type === "expense" && tx.description.toLowerCase().includes("perplexity") && tx.description.toLowerCase().includes("commissi"),
@@ -1707,6 +1707,16 @@ function saveEditCategory(i) {
       opt.value       = cfg.id;
       opt.textContent = cfg.name;
       sel.appendChild(opt);
+    });
+    sel.addEventListener("change", () => {
+      const fixedId = sel.value;
+      if (!fixedId) return;
+      const cfg = fixedExpensesConfig.find(c => c.id === fixedId);
+      if (!cfg) return;
+      document.getElementById("tx-category").value = cfg.category;
+      document.getElementById("tx-amount").value   = cfg.defaultAmount;
+      document.getElementById("tx-account").value  = cfg.accountId;
+      document.getElementById("tx-type").value     = cfg.isIncome ? "income" : "expense";
     });
 
     form.addEventListener("submit", e => {
