@@ -370,11 +370,13 @@
     </div>
 
     <!-- Capitale -->
-    <div class="grid" style="grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+    <div class="grid" style="grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;align-items:stretch;">
       <div class="card">
+        <h3 style="margin:0 0 6px;font-size:14px;font-weight:700;">Capitale</h3>
         <div id="capital-panel" class="small"></div>
       </div>
       <div class="card" style="display:flex;flex-direction:column;flex:1;">
+        <h3 style="margin:0 0 6px;font-size:14px;font-weight:700;">Disponibile operativo</h3>
         <div id="disponibile-panel" class="small" style="flex:1;display:flex;"></div>
       </div>
     </div>
@@ -1039,7 +1041,7 @@ const disponibile = visibleTotal - pendingFixed - adsKdpCost;
           <span class="tile-sub" style="font-size:11px;">– Spese fisse da pagare: <strong>€ ${fmt(pendingFixed)}</strong></span>
         </div>
         <div>
-          <span class="tile-value" style="font-size:28px;margin-top:8px;">Disponibile operativo: € ${fmt(disponibile)}</span>
+          <span class="tile-value" style="font-size:28px;margin-top:8px;">Margine: € ${fmt(disponibile)}</span>
         </div>
       </div>
     `;
