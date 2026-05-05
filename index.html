@@ -370,14 +370,14 @@
     </div>
 
     <!-- Capitale -->
-    <div class="grid" style="grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;align-items:stretch;">
-      <div class="card">
-        <h3 style="margin:0 0 6px;font-size:14px;font-weight:700;">Capitale</h3>
-        <div id="capital-panel" class="small"></div>
+    <div class="grid grid-2" style="margin-bottom:12px;align-items:stretch;">
+      <div class="card" style="display:flex;flex-direction:column;">
+        <h2>Capitale</h2>
+        <div id="capital-panel" class="small" style="flex:1;"></div>
       </div>
-      <div class="card" style="display:flex;flex-direction:column;flex:1;">
-        <h3 style="margin:0 0 6px;font-size:14px;font-weight:700;">Disponibile operativo</h3>
-        <div id="disponibile-panel" class="small" style="flex:1;display:flex;"></div>
+      <div class="card" style="display:flex;flex-direction:column;">
+        <h3>Disponibile operativo</h3>
+        <div id="disponibile-panel" class="small" style="flex:1;display:flex;flex-direction:column;justify-content:space-between;"></div>
       </div>
     </div>
 
@@ -553,7 +553,7 @@
     <!-- BLOCCO 1: Questo mese guadagno o perdo? -->
     <div class="card" style="margin-bottom:12px;">
       <div style="font-size:13px;font-weight:700;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px;">📅 Questo mese — Ads in corso</div>
-      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px;">
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;">
         <div style="text-align:center;padding:10px;background:#f9f9fb;border-radius:8px;">
           <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">💸 Spesa ads</div>
           <div id="kdp-spesa" style="font-size:20px;font-weight:700;color:#d9534f;">—</div>
@@ -565,10 +565,6 @@
         <div style="text-align:center;padding:10px;background:#f9f9fb;border-radius:8px;">
           <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">📊 Guadagno netto ads</div>
           <div id="kdp-guadagno" style="font-size:20px;font-weight:700;">—</div>
-        </div>
-        <div style="text-align:center;padding:10px;background:#f0fff4;border-radius:8px;">
-          <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">💶 Royalties previste KDP</div>
-          <div id="kdp-royalties-attese" style="font-size:20px;font-weight:700;color:#4caf50;">—</div>
         </div>
       </div>
       <!-- Semaforo campagne -->
@@ -896,19 +892,10 @@ if (categories.length > 0 && typeof categories[0] === 'string') {
   };
 
   function isFixedPaid(configId, month) {
-  // Controllo 1: match tramite regola automatica
-  const rule = fixedMatchRules[configId];
-  const matchedByRule = rule
-    ? allTransactions().some(tx => tx.date.startsWith(month) && rule(tx))
-    : false;
-  if (matchedByRule) return true;
-  // Controllo 2: match tramite campo fixedId esplicito (movimenti manuali)
-  return userTransactions.some(tx =>
-    tx.date.startsWith(month) &&
-    tx.isFixedExpenseInstance === true &&
-    tx.fixedId === configId
-  );
-}
+    const rule = fixedMatchRules[configId];
+    if (!rule) return false;
+    return allTransactions().some(tx => tx.date.startsWith(month) && rule(tx));
+  }
 
   // ─── KDP DATA ────────────────────────────────────────────────────────────────
   let kdpData = loadData('mwkdp', {});
@@ -955,8 +942,7 @@ if (categories.length > 0 && typeof categories[0] === 'string') {
           amount: cfg.defaultAmount,
           description: "Pensione – modifica importo se necessario",
           isPreloaded: false,
-          isFixedExpenseInstance: true,
-          fixedId: "fx_pensione"
+          isFixedExpenseInstance: true
         };
         userTransactions.push(tx);
         accounts.bank.balance += tx.amount;
@@ -997,26 +983,13 @@ if (categories.length > 0 && typeof categories[0] === 'string') {
 
     // — Capitale —
     const threshold = computeCapitalThreshold(currentMonth);
-    // Uscite utente del mese corrente ESCLUSE le Ads (già conteggiate nel foglio KDP)
-// Solo spese fisse della banca ancora da pagare (non ancora uscite dal saldo)
-const pendingFixedBank = fixedExpensesConfig
-  .filter(cfg => !cfg.isIncome && !isFixedPaid(cfg.id, currentMonth))
-  .reduce((s, cfg) => s + cfg.defaultAmount, 0);
-
-// Costo ads cumulativo dal foglio KDP (ultima riga disponibile)
-const adsKdpCost = (kdpData?.rows?.length > 0)
-  ? (kdpData.rows.filter(r => r.costo > 0).slice(-1)[0]?.costo || 0)
-  : 0;
-
-const margin = (accounts.bank.balance || 0) - threshold - pendingFixedBank - adsKdpCost;
+    const margin = (accounts.bank.balance || 0) - threshold;
     const marginClass = margin >= 0 ? "positive" : "negative";
     const capitalAlert = margin < 0 ? `<div style="margin-top:6px;padding:6px 10px;background:#ffe5e5;border-radius:6px;color:#d9534f;font-size:12px;font-weight:600;">⚠️ Saldo banca sotto la soglia intoccabile di € ${fmt(Math.abs(margin))}</div>` : "";
     document.getElementById("capital-panel").innerHTML = `
       <div class="info-tile color-teal">
         <span class="tile-sub" style="font-size:13px;">Saldo banca: € ${fmt(accounts.bank.balance)}</span>
         <span class="tile-sub" style="font-size:13px;">🔒 Capitale intoccabile: <strong style="color:#fff;">€ ${fmt(threshold)}</strong></span>
-        <span class="tile-sub" style="font-size:11px;">– Spese fisse da pagare: <strong>€ ${fmt(pendingFixedBank)}</strong></span>
-        <span class="tile-sub" style="font-size:11px;">– Ads in corso: <strong>€ ${fmt(adsKdpCost)}</strong></span>
         <span class="tile-value" style="font-size:28px;margin-top:6px;">Margine: € ${fmt(margin)}</span>
         ${margin < 0 ? `<div class="tile-alert">⚠️ Sotto soglia di € ${fmt(Math.abs(margin))}</div>` : ''}
       </div>
@@ -1030,19 +1003,14 @@ const margin = (accounts.bank.balance || 0) - threshold - pendingFixedBank - ads
     const pendingFixed = fixedExpensesConfig
       .filter(cfg => !isFixedPaid(cfg.id, currentMonth))
       .reduce((s, cfg) => s + cfg.defaultAmount, 0);
-    // Uscite utente del mese su tutti i conti (escluse Ads, già in adsKdpCost)
-const disponibile = visibleTotal - pendingFixed - adsKdpCost;
+    const disponibile = visibleTotal - pendingFixed;
     const dispClass = disponibile >= 0 ? "positive" : "negative";
     document.getElementById("disponibile-panel").innerHTML = `
-      <div class="info-tile color-emerald" style="height:100%;display:flex;flex-direction:column;justify-content:space-between;">
-        <div>
-          <span class="tile-sub" style="font-size:13px;">Totale conti: € ${fmt(visibleTotal)}</span>
-          <span class="tile-sub" style="font-size:11px;">– Ads in corso: <strong>€ ${fmt(adsKdpCost)}</strong></span>
-          <span class="tile-sub" style="font-size:11px;">– Spese fisse da pagare: <strong>€ ${fmt(pendingFixed)}</strong></span>
-        </div>
-        <div>
-          <span class="tile-value" style="font-size:28px;margin-top:8px;">Margine: € ${fmt(disponibile)}</span>
-        </div>
+      <div class="info-tile color-emerald">
+        <span class="tile-sub" style="font-size:13px;">Totale conti: € ${fmt(visibleTotal)}</span>
+        <span class="tile-sub" style="font-size:13px;">Spese fisse restanti: ${pendingFixed > 0 ? '– ' : ''}€ ${fmt(pendingFixed)}</span>
+        <span class="tile-label" style="margin-top:8px;">💰 Disponibile Operativo</span>
+        <span class="tile-value">€ ${fmt(disponibile)}</span>
       </div>
     `;
 
@@ -1121,10 +1089,7 @@ const disponibile = visibleTotal - pendingFixed - adsKdpCost;
             <span class="muted"> – € ${fmt(cfg.defaultAmount)}</span>
             ${cfg.variableAmount ? '<span class="pill" style="margin-left:4px;font-size:10px;">importo variabile</span>' : ''}
           </div>
-          <div style="display:flex;gap:6px;align-items:center;">
-            <span class="badge ${statusClass}">${statusLabel}</span>
-            <button class="btn-sm btn-edit" onclick="openEditFixed('${cfg.id}')">✏️ Modifica</button>
-          </div>
+          <span class="badge ${statusClass}">${statusLabel}</span>
         </div>
       `;
     }).join("");
@@ -1364,8 +1329,6 @@ const palette = cats.map(([label]) => {
     roiEl.style.color = roi >= 1 ? '#4caf50' : '#d9534f';
 
     document.getElementById('kdp-royalties-mese').textContent = '€ ' + fmt(royaltiesMese);
-    const royAtteseEl = document.getElementById('kdp-royalties-attese');
-    if (royAtteseEl) royAtteseEl.textContent = royaltiesMese > 0 ? '€ ' + fmt(royaltiesMese) : '—';
 
     const autoEl = document.getElementById('kdp-autofinanziamento');
     if (roi >= 1.5) {
@@ -1619,23 +1582,6 @@ function saveEditCategory(i) {
   renderCategoryDatalist();
   renderAll();
 }
-// ─── MODALE MODIFICA SPESA FISSA ─────────────────────────────────────────────
-  function openEditFixed(id) {
-    const cfg = fixedExpensesConfig.find(c => c.id === id);
-    if (!cfg) return;
-    const newName = prompt(`Nome spesa fissa:`, cfg.name);
-    if (newName === null) return;
-    const newAmount = prompt(`Importo default (€):`, cfg.defaultAmount);
-    if (newAmount === null) return;
-    const parsed = parseFloat(newAmount.replace(',', '.'));
-    if (isNaN(parsed) || parsed <= 0) { alert('Importo non valido.'); return; }
-    cfg.name = newName.trim() || cfg.name;
-    cfg.defaultAmount = parsed;
-    saveData('mw_fixedconfig', fixedExpensesConfig);
-    renderFixedExpenses();
-    renderHome();
-    alert('✅ Spesa fissa aggiornata.');
-  }
   // ─── TOGGLE CASSETTA ─────────────────────────────────────────────────────────
   function toggleCassetta() {
     cassettaVisible = !cassettaVisible;
