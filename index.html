@@ -1008,9 +1008,10 @@ if (categories.length > 0 && typeof categories[0] === 'string') {
     const disponibile = visibleTotal - pendingFixed;
     const dispClass = disponibile >= 0 ? "positive" : "negative";
     document.getElementById("disponibile-panel").innerHTML = `
-      <div class="info-tile color-emerald">
+      <div class="info-tile color-emerald" style="height:100%;box-sizing:border-box;">
         <span class="tile-sub" style="font-size:13px;">Totale conti: € ${fmt(visibleTotal)}</span>
-        <span class="tile-sub" style="font-size:13px;">Spese fisse restanti: ${pendingFixed > 0 ? '– ' : ''}€ ${fmt(pendingFixed)}</span>
+        <span class="tile-sub" style="font-size:13px;">– Ads in corso: <strong style="color:#fff;">—</strong></span>
+        <span class="tile-sub" style="font-size:13px;">– Spese fisse da pagare: ${pendingFixed > 0 ? '<strong style="color:#fff;">€ ' + fmt(pendingFixed) + '</strong>' : '€ 0,00'}</span>
         <span class="tile-label" style="margin-top:8px;">💰 Disponibile Operativo</span>
         <span class="tile-value">€ ${fmt(disponibile)}</span>
       </div>
