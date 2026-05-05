@@ -374,8 +374,8 @@
       <div class="card">
         <div id="capital-panel" class="small"></div>
       </div>
-      <div class="card" style="display:flex;flex-direction:column;">
-        <div id="disponibile-panel" class="small" style="flex:1;"></div>
+      <div class="card" style="display:flex;flex-direction:column;flex:1;">
+        <div id="disponibile-panel" class="small" style="flex:1;display:flex;"></div>
       </div>
     </div>
 
@@ -1039,8 +1039,7 @@ const disponibile = visibleTotal - pendingFixed - adsKdpCost;
           <span class="tile-sub" style="font-size:11px;">– Spese fisse da pagare: <strong>€ ${fmt(pendingFixed)}</strong></span>
         </div>
         <div>
-          <span class="tile-label" style="margin-top:8px;">💰 Disponibile operativo</span>
-          <span class="tile-value" style="font-size:28px;">€ ${fmt(disponibile)}</span>
+          <span class="tile-value" style="font-size:28px;margin-top:8px;">Disponibile operativo: € ${fmt(disponibile)}</span>
         </div>
       </div>
     `;
