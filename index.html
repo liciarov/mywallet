@@ -947,13 +947,17 @@ if (categories.length > 0 && typeof categories[0] === 'string') {
       const cfg = fixedExpensesConfig.find(c => c.id === "fx_pensione");
       if (cfg) {
         const tx = {
+          id: "auto_pensione_" + currentMonth,
+          date: firstOfMonth,
+          accountId: "bank",
+          type: "income",
           category: "Pensione",
           amount: cfg.defaultAmount,
           description: "Pensione – modifica importo se necessario",
           isPreloaded: false,
-        isFixedExpenseInstance: !!fixedId,
-        fixedId: fixedId || null
-      };
+          isFixedExpenseInstance: true,
+          fixedId: "fx_pensione"
+        };
         userTransactions.push(tx);
         accounts.bank.balance += tx.amount;
         persistAll();
@@ -1010,8 +1014,8 @@ const margin = (accounts.bank.balance || 0) - threshold - userMonthExpenses - ad
       <div class="info-tile color-teal">
         <span class="tile-sub" style="font-size:13px;">Saldo banca: € ${fmt(accounts.bank.balance)}</span>
         <span class="tile-sub" style="font-size:13px;">🔒 Capitale intoccabile: <strong style="color:#fff;">€ ${fmt(threshold)}</strong></span>
-        <span class="tile-sub" style="font-size:11px;">– Uscite mese: <strong>€ ${fmt(userMonthExpNoAds)}</strong></span>
-<span class="tile-sub" style="font-size:11px;">– Ads in corso: <strong>€ ${fmt(adsKdpCost)}</strong></span>
+        <span class="tile-sub" style="font-size:11px;">– Uscite mese: <strong>€ ${fmt(userMonthExpenses)}</strong></span>
+        <span class="tile-sub" style="font-size:11px;">– Ads in corso: <strong>€ ${fmt(adsKdpCost)}</strong></span>
         <span class="tile-value" style="font-size:28px;margin-top:6px;">Margine: € ${fmt(margin)}</span>
         ${margin < 0 ? `<div class="tile-alert">⚠️ Sotto soglia di € ${fmt(Math.abs(margin))}</div>` : ''}
       </div>
@@ -1035,12 +1039,9 @@ const disponibile = visibleTotal - pendingFixed - allUserMonthExpenses - adsKdpC
     document.getElementById("disponibile-panel").innerHTML = `
       <div class="info-tile color-emerald">
         <span class="tile-sub" style="font-size:13px;">Totale conti: € ${fmt(visibleTotal)}</span>
-        <span class="tile-sub" style="font-size:11px;">– Uscite mese: <strong>€ ${fmt(allUserMonthExp)}</strong></span>
-<span class="tile-sub" style="font-size:11px;">– Ads in corso: <strong>€ ${fmt(adsKdpCost)}</strong></span>
-document.getElementById("tx-note").value     = cfg.name;
+        <span class="tile-sub" style="font-size:11px;">– Uscite mese: <strong>€ ${fmt(allUserMonthExpenses)}</strong></span>
+        <span class="tile-sub" style="font-size:11px;">– Ads in corso: <strong>€ ${fmt(adsKdpCost)}</strong></span>
         <span class="tile-sub" style="font-size:13px;">Spese fisse restanti: ${pendingFixed > 0 ? '– ' : ''}€ ${fmt(pendingFixed)}</span>
-        `<span class="tile-sub" style="font-size:11px">– Uscite mese: <strong>${fmt(allUserMonthExpenses)}</strong></span>` +
-`<span class="tile-sub" style="font-size:11px">– Ads in corso: <strong>${fmt(adsKdpCost)}</strong></span>` +
         <span class="tile-label" style="margin-top:8px;">💰 Disponibile Operativo</span>
         <span class="tile-value">€ ${fmt(disponibile)}</span>
       </div>
