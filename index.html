@@ -1032,7 +1032,7 @@ const margin = (accounts.bank.balance || 0) - threshold - pendingFixedBank - ads
 const disponibile = visibleTotal - pendingFixed - adsKdpCost;
     const dispClass = disponibile >= 0 ? "positive" : "negative";
     document.getElementById("disponibile-panel").innerHTML = `
-      <div class="info-tile color-emerald">
+      <div class="info-tile color-emerald" style="height:100%;">
         <span class="tile-sub" style="font-size:13px;">Totale conti: € ${fmt(visibleTotal)}</span>
         <span class="tile-sub" style="font-size:11px;">– Ads in corso: <strong>€ ${fmt(adsKdpCost)}</strong></span>
         <span class="tile-sub" style="font-size:11px;">– Spese fisse da pagare: <strong>€ ${fmt(pendingFixed)}</strong></span>
