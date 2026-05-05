@@ -1031,19 +1031,13 @@ const margin = (accounts.bank.balance || 0) - threshold - pendingFixedBank - ads
       .filter(cfg => !isFixedPaid(cfg.id, currentMonth))
       .reduce((s, cfg) => s + cfg.defaultAmount, 0);
     // Uscite utente del mese su tutti i conti (escluse Ads, già in adsKdpCost)
-const allUserMonthExpenses = userTransactions
-  .filter(tx => tx.date.startsWith(currentMonth) && tx.type === 'expense' && tx.category?.toLowerCase() !== 'ads')
-  .reduce((s, tx) => s + tx.amount, 0);
-
-const disponibile = visibleTotal - pendingFixed - allUserMonthExpenses - adsKdpCost;
+const disponibile = visibleTotal - pendingFixed - adsKdpCost;
     const dispClass = disponibile >= 0 ? "positive" : "negative";
     document.getElementById("disponibile-panel").innerHTML = `
       <div class="info-tile color-emerald">
         <span class="tile-sub" style="font-size:13px;">Totale conti: € ${fmt(visibleTotal)}</span>
-        <span class="tile-sub" style="font-size:11px;">– Uscite mese: <strong>€ ${fmt(allUserMonthExpenses)}</strong></span>
         <span class="tile-sub" style="font-size:11px;">– Ads in corso: <strong>€ ${fmt(adsKdpCost)}</strong></span>
-        <span class="tile-sub" style="font-size:13px;">Spese fisse restanti: ${pendingFixed > 0 ? '– ' : ''}€ ${fmt(pendingFixed)}</span>
-        <span class="tile-label" style="margin-top:8px;">💰 Disponibile Operativo</span>
+        <span class="tile-sub" style="font-size:11px;">– Spese fisse da pagare: <strong>€ ${fmt(pendingFixed)}</strong></span>
         <span class="tile-value">€ ${fmt(disponibile)}</span>
       </div>
     `;
