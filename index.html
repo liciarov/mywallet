@@ -1000,7 +1000,7 @@ if (categories.length > 0 && typeof categories[0] === 'string') {
     // Uscite utente del mese corrente ESCLUSE le Ads (già conteggiate nel foglio KDP)
 // Solo spese fisse della banca ancora da pagare (non ancora uscite dal saldo)
 const pendingFixedBank = fixedExpensesConfig
-  .filter(cfg => !cfg.isIncome && cfg.accountId === 'bank' && !isFixedPaid(cfg.id, currentMonth))
+  .filter(cfg => !cfg.isIncome && !isFixedPaid(cfg.id, currentMonth))
   .reduce((s, cfg) => s + cfg.defaultAmount, 0);
 
 // Costo ads cumulativo dal foglio KDP (ultima riga disponibile)
@@ -1015,7 +1015,7 @@ const margin = (accounts.bank.balance || 0) - threshold - pendingFixedBank - ads
       <div class="info-tile color-teal">
         <span class="tile-sub" style="font-size:13px;">Saldo banca: € ${fmt(accounts.bank.balance)}</span>
         <span class="tile-sub" style="font-size:13px;">🔒 Capitale intoccabile: <strong style="color:#fff;">€ ${fmt(threshold)}</strong></span>
-        <span class="tile-sub" style="font-size:11px;">– Spese fisse banca da pagare: <strong>€ ${fmt(pendingFixedBank)}</strong></span>
+        <span class="tile-sub" style="font-size:11px;">– Spese fisse da pagare: <strong>€ ${fmt(pendingFixedBank)}</strong></span>
         <span class="tile-sub" style="font-size:11px;">– Ads in corso: <strong>€ ${fmt(adsKdpCost)}</strong></span>
         <span class="tile-value" style="font-size:28px;margin-top:6px;">Margine: € ${fmt(margin)}</span>
         ${margin < 0 ? `<div class="tile-alert">⚠️ Sotto soglia di € ${fmt(Math.abs(margin))}</div>` : ''}
