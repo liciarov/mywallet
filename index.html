@@ -616,7 +616,7 @@
       <div style="font-size:11px;color:var(--muted);margin-bottom:8px;">Lancio = 50€ tuoi + campagna deve autoalimentarsi</div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px;">
         <div style="padding:8px;background:#f9f9fb;border-radius:8px;text-align:center;">
-          <div style="font-size:10px;color:var(--muted);">Ultime royalties incassate</div>
+          <div style="font-size:10px;color:var(--muted);">Margine capitale</div>
           <div id="kdp-royalties-incassate" style="font-size:15px;font-weight:700;color:#4caf50;">—</div>
         </div>
         <div style="padding:8px;background:#f9f9fb;border-radius:8px;text-align:center;">
@@ -1357,27 +1357,20 @@ const palette = cats.map(([label]) => {
     // Blocco 4 — Posso lanciare?
     document.getElementById('kdp-spesa-mini').textContent = '– € ' + fmt(spesa);
 
-    // Royalties effettivamente incassate: prende il mese più recente con movimenti categoria "Royalties KDP ricevute"
-    const allRoyMonths = [...new Set(
-      userTransactions
-        .filter(tx => (tx.category || '').toLowerCase() === 'royalties kdp ricevute' && tx.type === 'income')
-        .map(tx => tx.date.slice(0, 7))
-    )].sort().reverse();
-    const lastRoyMonth = allRoyMonths[0] || null;
-    const royIncassate = lastRoyMonth
-      ? userTransactions
-          .filter(tx => tx.date.startsWith(lastRoyMonth) && (tx.category || '').toLowerCase() === 'royalties kdp ricevute' && tx.type === 'income')
-          .reduce((s, tx) => s + tx.amount, 0)
-      : 0;
+    // Margine capitale (stesso calcolo del pannello Home)
+    const threshold4 = computeCapitalThreshold(currentMonth);
+    const margin4 = (accounts.bank.balance || 0) - threshold4;
+    const pendingFixed4 = fixedExpensesConfig.filter(cfg => !isFixedPaid(cfg.id, currentMonth)).reduce((s,cfg)=>s+cfg.defaultAmount,0);
+    const margineCapitale = margin4 - pendingFixed4 - spesa;
+
     const royIncEl = document.getElementById('kdp-royalties-incassate');
     if (royIncEl) {
-      royIncEl.textContent = royIncassate > 0 ? '€ ' + fmt(royIncassate) : '—';
-      const mLabel = lastRoyMonth ? new Date(lastRoyMonth + '-01').toLocaleString('it-IT', { month: 'long', year: 'numeric' }) : '';
-      royIncEl.title = mLabel ? 'Incassate in ' + mLabel : '';
+      royIncEl.textContent = '€ ' + fmt(margineCapitale);
     }
-    const surplus = royIncassate - spesa;
+
+    const surplus = margineCapitale - spesa;
     const surplusEl = document.getElementById('kdp-surplus');
-    surplusEl.textContent = '€ ' + fmt(Math.max(0, surplus));
+    surplusEl.textContent = '€ ' + fmt(surplus);
     surplusEl.style.color = surplus >= 50 ? '#4caf50' : '#d9534f';
 
     const lancioEl = document.getElementById('kdp-lancio');
