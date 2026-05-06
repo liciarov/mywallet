@@ -1782,15 +1782,8 @@ const APPSSCRIPTURL = APPS_SCRIPT_URL; // ← incolla qui il tuo Google Apps Scr
       document.getElementById('kdp-last-update').textContent = '⏳ Caricamento...';
       document.getElementById('kdp-refresh-btn').disabled = true;
 
-      // Legge il foglio RIEPILOGO MENSILE via Apps Script
-      // Il parametro action=kdp dice all'Apps Script di restituire i dati KDP
       const res = await fetch(APPS_SCRIPT_URL + '?action=kdp');
       const json = await res.json();
-
-      // Formato atteso dal Apps Script:
-      // { rows: [ { data, costo, vendite, guadagno, royalties }, ... ] }
-      // data = "26/04/2026", costo = cumul spesa, vendite = cumul vendite,
-      // guadagno = cumul guadagno previsto, royalties = cumul royalties KDP col E
 
       if (json && json.rows) {
         kdpData = {
@@ -1799,12 +1792,7 @@ const APPSSCRIPTURL = APPS_SCRIPT_URL; // ← incolla qui il tuo Google Apps Scr
         };
         saveData('mwkdp', kdpData);
         renderKdp();
-        saveData('mwkdp', kdpData);
-        renderKdp();
         renderHome();
-      } else {
-        document.getElementById('kdp-last-update').textContent = '⚠️ Risposta non valida dal server';
-      }
       } else {
         document.getElementById('kdp-last-update').textContent = '⚠️ Risposta non valida dal server';
       }
