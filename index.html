@@ -1799,6 +1799,12 @@ const APPSSCRIPTURL = APPS_SCRIPT_URL; // ← incolla qui il tuo Google Apps Scr
         };
         saveData('mwkdp', kdpData);
         renderKdp();
+        saveData('mwkdp', kdpData);
+        renderKdp();
+        renderHome();
+      } else {
+        document.getElementById('kdp-last-update').textContent = '⚠️ Risposta non valida dal server';
+      }
       } else {
         document.getElementById('kdp-last-update').textContent = '⚠️ Risposta non valida dal server';
       }
