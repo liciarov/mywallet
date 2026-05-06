@@ -1014,9 +1014,10 @@ if (categories.length > 0 && typeof categories[0] === 'string') {
         <span class="tile-sub" style="font-size:13px;">– Ads in corso: <strong style="color:#fff;">—</strong></span>
         <span class="tile-sub" style="font-size:13px;">– Spese fisse da pagare: ${pendingFixed > 0 ? '<strong style="color:#fff;">€ ' + fmt(pendingFixed) + '</strong>' : '€ 0,00'}</span>
         <span class="tile-label" style="margin-top:8px;">💰 Disponibile Operativo</span>
+        <span class="tile-sub" style="font-size:13px;">💡 Ti restano da spendere: <strong style="color:#fff;">€ ${fmt(disponibile)}</strong></span>
         <span class="tile-value">€ ${fmt(disponibile)}</span>
       </div>
-    `;
+    `
 
     // — Movimenti mese (escluse Ads) —
     const moDiv = document.getElementById("month-overview");
