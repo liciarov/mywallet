@@ -614,7 +614,7 @@
     <div class="card" style="margin-bottom:12px;">
       <div style="font-size:13px;font-weight:700;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px;">🚀 Posso lanciare una nuova campagna?</div>
       <div style="font-size:11px;color:var(--muted);margin-bottom:8px;">Lancio = 50€ tuoi + campagna deve autoalimentarsi</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px;">
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px;">
         <div style="padding:8px;background:#f9f9fb;border-radius:8px;text-align:center;">
           <div style="font-size:10px;color:var(--muted);">Margine capitale</div>
           <div id="kdp-royalties-incassate" style="font-size:15px;font-weight:700;color:#4caf50;">—</div>
@@ -622,6 +622,10 @@
         <div style="padding:8px;background:#f9f9fb;border-radius:8px;text-align:center;">
           <div style="font-size:10px;color:var(--muted);">Spesa ads mese</div>
           <div id="kdp-spesa-mini" style="font-size:15px;font-weight:700;color:#d9534f;">—</div>
+        </div>
+        <div style="padding:8px;background:#f9f9fb;border-radius:8px;text-align:center;">
+          <div style="font-size:10px;color:var(--muted);">Previsto resto mese</div>
+          <div id="kdp-previsto" style="font-size:15px;font-weight:700;color:#d9534f;">—</div>
         </div>
         <div style="padding:8px;background:#f9f9fb;border-radius:8px;text-align:center;">
           <div style="font-size:10px;color:var(--muted);">Surplus disponibile</div>
@@ -1368,7 +1372,26 @@ const palette = cats.map(([label]) => {
       royIncEl.textContent = '€ ' + fmt(margineCapitale);
     }
 
-    const surplus = margineCapitale - spesa;
+    // Media giornaliera ultimi 10 giorni e previsione resto mese
+    const rowsConDati = d.rows.filter(r => r.costo > 0 || r.vendite > 0);
+    const last10 = rowsConDati.slice(-10);
+    const daily10 = [];
+    for (let i = 0; i < last10.length; i++) {
+      const prev = i === 0 ? { costo: 0 } : last10[i - 1];
+      daily10.push((last10[i].costo || 0) - (prev.costo || 0));
+    }
+    const mediaGiornaliera = daily10.reduce((s, v) => s + v, 0) / daily10.length;
+    const oggi = new Date();
+    const fineM = new Date(oggi.getFullYear(), oggi.getMonth() + 1, 0).getDate();
+    const giorniRimanenti = fineM - oggi.getDate();
+    const previsto = mediaGiornaliera * giorniRimanenti;
+
+    const prevEl = document.getElementById('kdp-previsto');
+    if (prevEl) {
+      prevEl.textContent = '– € ' + fmt(previsto);
+    }
+
+    const surplus = margineCapitale - spesa - previsto;
     const surplusEl = document.getElementById('kdp-surplus');
     surplusEl.textContent = '€ ' + fmt(surplus);
     surplusEl.style.color = surplus >= 50 ? '#4caf50' : '#d9534f';
