@@ -419,10 +419,7 @@
       <div>
         <h3>📥 Carica dati da cloud</h3>
         <p class="muted" style="margin-bottom:8px;">Inserisci il codice generato dal dispositivo principale.</p>
-        <div style="display:flex;gap:8px;align-items:center;">
-          <input type="text" id="sync-code-in" placeholder="Es. A7X3K2" style="width:160px;margin-bottom:0;font-size:18px;letter-spacing:3px;text-transform:uppercase;" maxlength="6" />
-          <button class="btn-primary" onclick="syncDownload()">📲 Carica</button>
-        </div>
+        <button class="btn-primary" onclick="syncDownload()">📲 Carica</button>
         <div id="sync-status" style="margin-top:10px;font-size:13px;"></div>
       </div>
     </div>
@@ -1864,6 +1861,8 @@ const APPSSCRIPTURL = APPS_SCRIPT_URL; // ← incolla qui il tuo Google Apps Scr
     return Math.random().toString(36).substring(2, 8).toUpperCase();
   }
 
+  const JSONBIN_BIN_ID = '69fd915fc0954111d8f347bf';
+
   async function syncUpload() {
     const payload = {
       accounts: accounts,
@@ -1872,36 +1871,26 @@ const APPSSCRIPTURL = APPS_SCRIPT_URL; // ← incolla qui il tuo Google Apps Scr
       categories: categories,
       kdpData: kdpData
     };
-    const code = generateCode();
     try {
-      const res = await fetch(JSONBIN_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Master-Key': JSONBIN_KEY,
-          'X-Bin-Name': code,
-          'X-Bin-Private': 'true'
-        },
-        body: JSON.stringify(payload)
-      });
-      const json = await res.json();
-      const binId = json.metadata?.id;
-      if (!binId) throw new Error('Nessun ID ricevuto');
-      // Salva localmente codice→binId
-      saveData('mw_sync_map_' + code, binId);
-      // Salva anche sul bin stesso per poterlo recuperare tramite codice
-      // Aggiorna il bin con il codice incluso
-      await fetch(JSONBIN_URL + '/' + binId, {
+      const res = await fetch(JSONBIN_URL + '/' + JSONBIN_BIN_ID, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'X-Master-Key': JSONBIN_KEY
         },
-        body: JSON.stringify({ ...payload, _binId: binId, _code: code })
+        body: JSON.stringify(payload)
       });
-      document.getElementById('sync-code-out').textContent = code;
-      document.getElementById('sync-code-out').style.display = 'block';
-      document.getElementById('sync-code-label').style.display = 'block';
+      const json = await res.json();
+      if (json.metadata) {
+        document.getElementById('sync-code-out').textContent = '✅ Salvato!';
+        document.getElementById('sync-code-out').style.display = 'block';
+        document.getElementById('sync-code-out').style.fontSize = '16px';
+        document.getElementById('sync-code-out').style.letterSpacing = '0';
+        document.getElementById('sync-code-label').textContent = 'Ora premi Carica sugli altri dispositivi';
+        document.getElementById('sync-code-label').style.display = 'block';
+      } else {
+        throw new Error('Risposta non valida');
+      }
     } catch(e) {
       alert('❌ Errore durante il salvataggio. Controlla la connessione.');
       console.warn(e);
@@ -1909,26 +1898,13 @@ const APPSSCRIPTURL = APPS_SCRIPT_URL; // ← incolla qui il tuo Google Apps Scr
   }
 
   async function syncDownload() {
-    const code = document.getElementById('sync-code-in').value.trim().toUpperCase();
-    if (code.length < 6) { alert('Inserisci il codice completo (6 caratteri).'); return; }
     const statusEl = document.getElementById('sync-status');
-    statusEl.textContent = '⏳ Ricerca in corso...';
+    statusEl.textContent = '⏳ Caricamento...';
     try {
-      // Cerca tra i bin per nome (X-Bin-Name = code)
-      const res = await fetch('https://api.jsonbin.io/v3/b?name=' + code, {
+      const res = await fetch(JSONBIN_URL + '/' + JSONBIN_BIN_ID + '/latest', {
         headers: { 'X-Master-Key': JSONBIN_KEY }
       });
-      const json = await res.json();
-      // JSONBin restituisce lista di bin con quel nome
-      const bins = Array.isArray(json) ? json : (json.record ? [json] : null);
-      if (!bins || bins.length === 0) throw new Error('Codice non trovato');
-      const binId = bins[0]?.record?.metadata?.id || bins[0]?.metadata?.id;
-      if (!binId) throw new Error('ID non trovato');
-      // Carica il bin
-      const res2 = await fetch(JSONBIN_URL + '/' + binId + '/latest', {
-        headers: { 'X-Master-Key': JSONBIN_KEY }
-      });
-      const data = await res2.json();
+      const data = await res.json();
       const payload = data.record || data;
       if (payload.accounts) { Object.assign(accounts, payload.accounts); saveData('mw_accounts', accounts); }
       if (payload.userTransactions) { userTransactions = payload.userTransactions; saveData('mw_user_transactions', userTransactions); }
@@ -1939,7 +1915,7 @@ const APPSSCRIPTURL = APPS_SCRIPT_URL; // ← incolla qui il tuo Google Apps Scr
       statusEl.style.color = 'var(--success)';
       setTimeout(() => renderAll(), 500);
     } catch(e) {
-      statusEl.textContent = '❌ Codice non trovato o errore di connessione.';
+      statusEl.textContent = '❌ Errore di connessione. Riprova.';
       statusEl.style.color = 'var(--danger)';
       console.warn(e);
     }
