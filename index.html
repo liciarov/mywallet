@@ -352,6 +352,7 @@
   <h1>💰 MyWallet</h1>
   <nav class="tabs">
     <button class="tab-btn active" data-page="home">Home</button>
+    <button class="tab-btn" data-page="sync">💾 Sync</button>
     <button class="tab-btn" data-page="new">Nuovo movimento</button>
     <button class="tab-btn" data-page="tx">Movimenti</button>    
     <button class="tab-btn" data-page="fixed">Spese fisse</button>
@@ -398,6 +399,24 @@
         <h3>Ads / KDP (mese)</h3>
         <div id="ads-overview" class="small"></div>
       </div>
+    </div>
+  </section>
+
+  <!-- SYNC -->
+  <section id="page-sync" class="page">
+    <div class="card">
+      <h2>💾 Sincronizzazione dati</h2>
+      <p class="muted" style="margin-bottom:12px;">Usa questi strumenti per trasferire i dati tra dispositivi diversi.</p>
+
+      <h3>📤 Esporta</h3>
+      <p class="muted" style="margin-bottom:8px;">Copia il testo qui sotto e incollalo sull'altro dispositivo.</p>
+      <textarea id="sync-export-text" style="font-size:10px;height:80px;" readonly></textarea>
+      <button class="btn-primary" style="margin-bottom:16px;" onclick="syncExport()">Genera export</button>
+
+      <h3>📥 Importa</h3>
+      <p class="muted" style="margin-bottom:8px;">Incolla qui il testo copiato dall'altro dispositivo.</p>
+      <textarea id="sync-import-text" placeholder="Incolla qui..." style="font-size:10px;height:80px;"></textarea>
+      <button class="btn-primary" onclick="syncImport()">Importa e ricarica</button>
     </div>
   </section>
 
@@ -1830,10 +1849,38 @@ const APPSSCRIPTURL = APPS_SCRIPT_URL; // ← incolla qui il tuo Google Apps Scr
     fetchKdpFromSheets();
   }
 
+  function syncExport() {
+    const payload = {
+      accounts: accounts,
+      userTransactions: userTransactions,
+      hiddenPreloaded: hiddenPreloaded,
+      categories: categories,
+      kdpData: kdpData
+    };
+    document.getElementById('sync-export-text').value = JSON.stringify(payload);
+  }
+
+  function syncImport() {
+    const raw = document.getElementById('sync-import-text').value.trim();
+    if (!raw) { alert('Incolla prima il testo da importare.'); return; }
+    try {
+      const payload = JSON.parse(raw);
+      if (payload.accounts) { Object.assign(accounts, payload.accounts); saveData('mw_accounts', accounts); }
+      if (payload.userTransactions) { userTransactions = payload.userTransactions; saveData('mw_user_transactions', userTransactions); }
+      if (payload.hiddenPreloaded) { hiddenPreloaded = payload.hiddenPreloaded; saveData('mw_hidden_preloaded', hiddenPreloaded); }
+      if (payload.categories) { categories = payload.categories; saveData('mwcategories', categories); }
+      if (payload.kdpData) { kdpData = payload.kdpData; saveData('mwkdp', kdpData); }
+      alert('✅ Importazione completata.');
+      renderAll();
+    } catch(e) {
+      alert('❌ Testo non valido. Controlla di aver copiato tutto correttamente.');
+    }
+  }
+
   // ─── TABS ────────────────────────────────────────────────────────────────────
   function initTabs() {
     const buttons = document.querySelectorAll(".tab-btn");
-    const pageIds = { home: "page-home", new: "page-new", tx: "page-tx", fixed: "page-fixed", categories: "page-categories", kdp: "page-kdp" };
+    const pageIds = { home: "page-home", new: "page-new", tx: "page-tx", fixed: "page-fixed", categories: "page-categories", kdp: "page-kdp", sync: "page-sync" };
     buttons.forEach(btn => {
       btn.addEventListener("click", () => {
         buttons.forEach(b => b.classList.remove("active"));
