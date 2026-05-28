@@ -606,6 +606,8 @@
           <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">💶 Marzo → pagamento maggio</div>
           <div style="font-size:18px;font-weight:700;color:#4caf50;">€ 715</div>
           <div style="font-size:10px;color:var(--muted);">a fine mese</div>
+          <div style="font-size:11px;color:#555;margin-top:6px;">– Ads Marzo (298,70) = <strong style="color:#2e7d32;">€ 416,30</strong></div>
+<div style="font-size:11px;color:#555;margin-top:3px;">– Ads mese in corso = <strong id="kdp-netto-marzo-live">€ –</strong></div>
         </div>
         <div style="padding:10px;background:#f0f7ff;border-radius:8px;">
           <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">📅 Aprile → pagamento giugno</div>
@@ -1359,6 +1361,12 @@ const palette = cats.map(([label]) => {
       sem.style.color = '#c62828';
     }
 
+    const nettoEl = document.getElementById('kdp-netto-marzo-live');
+if (nettoEl) {
+  const nettoLive = 715 - spesa;
+  nettoEl.textContent = '€ ' + fmt(nettoLive);
+  nettoEl.style.color = nettoLive >= 0 ? '#2e7d32' : '#d9534f';
+}
     const royAprEl = document.getElementById('kdp-royalties-aprile');
     if (royAprEl) royAprEl.textContent = royaltiesMese > 0 ? '€ ' + fmt(royaltiesMese) : '—';
 
