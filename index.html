@@ -630,7 +630,6 @@
         <div style="padding:10px;background:#f9f9fb;border-radius:8px;text-align:center;">
           <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">Royalties previste questo mese</div>
           <div id="kdp-royalties-mese" style="font-size:28px;font-weight:700;color:var(--accent);">—</div>
-          <div style="font-size:10px;color:var(--muted);">colonna E foglio</div>
         </div>
       </div>
       <div id="kdp-autofinanziamento" style="border-radius:8px;padding:10px 14px;font-size:13px;font-weight:600;text-align:center;">—</div>
@@ -1340,7 +1339,8 @@ const palette = cats.map(([label]) => {
     const spesa   = last.costo    || 0;
     const vendite = last.vendite  || 0;
     const guadagno = last.guadagno || 0;  // vendite * 0.65 - spesa (già calcolato nel foglio)
-    const royaltiesMese = last.royalties || 0;  // colonna E
+    const lastRoyalties = kd.rows ? kd.rows.filter(r => r.royalties > 0).slice(-1)[0] : null;
+const royaltiesMese = lastRoyalties ? lastRoyalties.royalties : 0;
 
     // Blocco 1
     document.getElementById('kdp-spesa').textContent   = '€ ' + fmt(spesa);
