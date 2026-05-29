@@ -1019,7 +1019,7 @@ if (categories.length > 0 && typeof categories[0] === 'string') {
     const capitalAlert = margin < 0 ? `<div style="margin-top:6px;padding:6px 10px;background:#ffe5e5;border-radius:6px;color:#d9534f;font-size:12px;font-weight:600;">⚠️ Saldo banca sotto la soglia intoccabile di € ${fmt(Math.abs(margin))}</div>` : "";
     const pendingFixed2 = fixedExpensesConfig.filter(cfg => !isFixedPaid(cfg.id, currentMonth)).reduce((s,cfg)=>s+cfg.defaultAmount,0);
     const kd2 = kdpData;
-    const lastRow2 = (kd2 && kd2.rows) ? kd2.rows.filter(r => (r.costo > 0 || r.vendite > 0) && r.Data && r.Data.includes('/' + currentMonth.slice(5,7) + '/' + currentMonth.slice(0,4))).slice(-1)[0] : null;
+    const lastRow2 = (kd2 && kd2.rows) ? kd2.rows.filter(r => r.costo > 0 || r.vendite > 0).slice(-1)[0] : null;
     const adsInCorso = lastRow2?.costo || 0;
     const marginNet = margin - pendingFixed2 - adsInCorso;
     document.getElementById("capital-panel").innerHTML = `
@@ -1100,7 +1100,7 @@ if (categories.length > 0 && typeof categories[0] === 'string') {
       .filter(tx => (tx.category || '').toLowerCase() === 'ads' && tx.type === "expense")
       .reduce((s, tx) => s + tx.amount, 0);
     const kd = kdpData;
-    const lastRow = (kd && kd.rows) ? kd.rows.filter(r => (r.costo > 0 || r.vendite > 0) && r.Data && r.Data.includes('/' + currentMonth.slice(5,7) + '/' + currentMonth.slice(0,4))).slice(-1)[0] : null;
+    const lastRow = (kd && kd.rows) ? kd.rows.filter(r => r.costo > 0 || r.vendite > 0).slice(-1)[0] : null;
     const inCorso = lastRow?.costo || null;
     const vendite = lastRow?.vendite || 0;
     const guadagno = lastRow?.guadagno || 0;
@@ -1334,8 +1334,7 @@ const palette = cats.map(([label]) => {
     if (rows.length === 0) return;
 
     // Ultimi valori cumulativi (ultima riga con dati)
-    const rowsMese = rows.filter(r => r.Data && r.Data.includes('/' + currentMonth.slice(5,7) + '/' + currentMonth.slice(0,4)));
-const last = rowsMese.length > 0 ? rowsMese[rowsMese.length - 1] : rows[rows.length - 1];
+    const last = rows[rows.length - 1];
     const spesa   = last.costo    || 0;
     const vendite = last.vendite  || 0;
     const guadagno = last.guadagno || 0;  // vendite * 0.65 - spesa (già calcolato nel foglio)
