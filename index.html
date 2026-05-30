@@ -959,6 +959,11 @@ if (categories.length > 0 && typeof categories[0] === 'string') {
   };
 
   function isFixedPaid(configId, month) {
+    // Per spese custom: cerca movimenti con fixedId corrispondente
+    if (configId.startsWith("fx_custom_")) {
+      return allTransactions().some(tx => tx.date.startsWith(month) && tx.fixedId === configId);
+    }
+    // Per spese predefinite: usa le regole di matching
     const rule = fixedMatchRules[configId];
     if (!rule) return false;
     return allTransactions().some(tx => tx.date.startsWith(month) && rule(tx));
