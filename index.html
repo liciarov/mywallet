@@ -960,12 +960,19 @@ if (categories.length > 0 && typeof categories[0] === 'string') {
 
   function isFixedPaid(configId, month) {
     const txs = allTransactions().filter(tx => tx.date.startsWith(month));
-    // Prima cerca per fixedId esplicito (tutti i tipi di spesa fissa)
+    // 1. Match diretto per fixedId (il più affidabile)
     if (txs.some(tx => tx.fixedId === configId)) return true;
-    // Fallback: regole di matching sulla descrizione (per movimenti vecchi)
+    // 2. Fallback: regole di matching sulla descrizione (movimenti vecchi/precaricati)
     const rule = fixedMatchRules[configId];
-    if (!rule) return false;
-    return txs.some(tx => rule(tx));
+    if (rule && txs.some(tx => rule(tx))) return true;
+    // 3. Fallback finale: categoria + conto corrispondono alla spesa fissa
+    const cfg = fixedExpensesConfig.find(c => c.id === configId);
+    if (!cfg) return false;
+    return txs.some(tx =>
+      tx.isFixedExpenseInstance &&
+      tx.accountId === cfg.accountId &&
+      (tx.category || '').toLowerCase() === (cfg.category || '').toLowerCase()
+    );
   }
 
   // ─── KDP DATA ────────────────────────────────────────────────────────────────
