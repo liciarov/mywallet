@@ -959,14 +959,13 @@ if (categories.length > 0 && typeof categories[0] === 'string') {
   };
 
   function isFixedPaid(configId, month) {
-    // Per spese custom: cerca movimenti con fixedId corrispondente
-    if (configId.startsWith("fx_custom_")) {
-      return allTransactions().some(tx => tx.date.startsWith(month) && tx.fixedId === configId);
-    }
-    // Per spese predefinite: usa le regole di matching
+    const txs = allTransactions().filter(tx => tx.date.startsWith(month));
+    // Prima cerca per fixedId esplicito (tutti i tipi di spesa fissa)
+    if (txs.some(tx => tx.fixedId === configId)) return true;
+    // Fallback: regole di matching sulla descrizione (per movimenti vecchi)
     const rule = fixedMatchRules[configId];
     if (!rule) return false;
-    return allTransactions().some(tx => tx.date.startsWith(month) && rule(tx));
+    return txs.some(tx => rule(tx));
   }
 
   // ─── KDP DATA ────────────────────────────────────────────────────────────────
@@ -1921,7 +1920,8 @@ function saveEditCategory(i) {
         amount,
         description: note,
         isPreloaded: false,
-        isFixedExpenseInstance: !!fixedId
+        isFixedExpenseInstance: !!fixedId,
+        ...(fixedId ? { fixedId } : {})
       };
 
       userTransactions.push(tx);
