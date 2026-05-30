@@ -1244,6 +1244,7 @@ if (categories.length > 0 && typeof categories[0] === 'string') {
     const idx = fixedExpensesConfig.findIndex(c => c.id === id);
     fixedExpensesConfig.splice(idx, 1);
     saveData("mw_fixed_expenses", fixedExpensesConfig);
+    populateFixedSelect();
     renderAll();
   }
 
@@ -1862,14 +1863,14 @@ function saveEditCategory(i) {
   function populateFixedSelect() {
     const sel = document.getElementById("tx-fixed");
     const current = sel.value;
-    sel.innerHTML = '<option value="">– nessuna –</option>';
+    sel.innerHTML = '<option value="">\u2013 nessuna \u2013</option>';
     fixedExpensesConfig.filter(cfg => !cfg.isIncome).forEach(cfg => {
       const opt = document.createElement("option");
       opt.value = cfg.id;
       opt.textContent = cfg.name;
       sel.appendChild(opt);
     });
-    sel.value = current;
+    if (current) sel.value = current;
   }
 
   function initNewTxForm() {
@@ -1879,8 +1880,9 @@ function saveEditCategory(i) {
 
     // Popola select spese fisse
     populateFixedSelect();
+
     document.getElementById("tx-fixed").addEventListener("change", () => {
-      const fixedId = sel.value;
+      const fixedId = document.getElementById("tx-fixed").value;
       if (!fixedId) return;
       const cfg = fixedExpensesConfig.find(c => c.id === fixedId);
       if (!cfg) return;
