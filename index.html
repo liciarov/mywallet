@@ -705,6 +705,41 @@
   </div>
 </div>
 
+<!-- MODALE SPESA FISSA -->
+<div class="edit-modal-overlay" id="fixed-modal-overlay">
+  <div class="edit-modal">
+    <h3 id="fxm-title">Spesa fissa</h3>
+    <input type="hidden" id="fxm-id" />
+    <label>Nome</label>
+    <input type="text" id="fxm-name" placeholder="es. Netflix, Dropbox..." />
+    <label>Importo (€)</label>
+    <input type="number" id="fxm-amount" step="0.01" min="0.01" />
+    <label>Categoria</label>
+    <input type="text" id="fxm-category" list="categories" placeholder="es. Abbonamenti, Tecnologia..." />
+    <label>Conto</label>
+    <select id="fxm-account">
+      <option value="bank">Banca</option>
+      <option value="postepay">PostePay Gialla</option>
+      <option value="paypal">PayPal</option>
+      <option value="cash">Contanti</option>
+      <option value="cassetta">Cassetta</option>
+    </select>
+    <label>Tipo</label>
+    <select id="fxm-type">
+      <option value="expense">Uscita (spesa)</option>
+      <option value="income">Entrata (es. pensione)</option>
+    </select>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+      <input type="checkbox" id="fxm-variable" style="width:auto;margin-bottom:0;" />
+      <label for="fxm-variable" style="margin-bottom:0;">Importo variabile</label>
+    </div>
+    <div class="edit-modal-actions">
+      <button class="btn-outline" onclick="closeFixedModal()">Annulla</button>
+      <button class="btn-primary" onclick="saveFixedModal()">Salva</button>
+    </div>
+  </div>
+</div>
+
 <script>
   // ─── COSTANTI ───────────────────────────────────────────────────────────────
   const currentMonth = new Date().toISOString().slice(0, 7);
@@ -890,20 +925,21 @@ if (categories.length > 0 && typeof categories[0] === 'string') {
   }
 
   // ─── SPESE FISSE ─────────────────────────────────────────────────────────────
-  const fixedExpensesConfig = [
+  const fixedExpensesDefault = [
     { id: "fx_pensione",       name: "Pensione",             defaultAmount: 611.00, category: "Pensione",      accountId: "bank",    variableAmount: true,  isIncome: true },
-  { id: "fx_sostentamento",  name: "Sostentamento",        defaultAmount: 330,   category: "Sostentamento", accountId: "bank",     variableAmount: false },
+    { id: "fx_sostentamento",  name: "Sostentamento",        defaultAmount: 330,   category: "Sostentamento", accountId: "bank",     variableAmount: false },
     { id: "fx_netflix",        name: "Netflix",              defaultAmount: 13.99, category: "Abbonamenti",   accountId: "postepay", variableAmount: false },
     { id: "fx_audible",        name: "Audible",              defaultAmount: 9.99,  category: "Abbonamenti",   accountId: "postepay", variableAmount: false },
     { id: "fx_prime_video",    name: "Prime Video ad-free",  defaultAmount: 1.99,  category: "Abbonamenti",   accountId: "postepay", variableAmount: false },
     { id: "fx_prime",          name: "Amazon Prime",         defaultAmount: 4.99,  category: "Abbonamenti",   accountId: "postepay", variableAmount: false },
     { id: "fx_canone_conto",   name: "Canone conto",         defaultAmount: 0.35,  category: "Banca/commissioni", accountId: "bank", variableAmount: false },
     { id: "fx_canone_carta",   name: "Canone carta",         defaultAmount: 1.25,  category: "Banca/commissioni", accountId: "bank", variableAmount: false },
-    { id: "fx_sim", name: "Ricarica SIM", defaultAmount: 10, category: "Telefonia", accountId: "postepay", variableAmount: true },
-    { id: "fx_perplexity", name: "Perplexity.AI", defaultAmount: 20.82, category: "Tecnologia", accountId: "postepay", variableAmount: false },
-    { id: "fx_perplexity_comm", name: "Commissione Perplexity", defaultAmount: 0.23, category: "Banca/commissioni", accountId: "postepay", variableAmount: true },
-    { id: "fx_dropbox", name: "Dropbox", defaultAmount: 11.99, category: "Tecnologia", accountId: "postepay", variableAmount: false }
+    { id: "fx_sim",            name: "Ricarica SIM",         defaultAmount: 10,    category: "Telefonia",     accountId: "postepay", variableAmount: true },
+    { id: "fx_perplexity",     name: "Perplexity.AI",        defaultAmount: 20.82, category: "Tecnologia",    accountId: "postepay", variableAmount: false },
+    { id: "fx_perplexity_comm",name: "Commissione Perplexity",defaultAmount: 0.23, category: "Banca/commissioni", accountId: "postepay", variableAmount: true },
+    { id: "fx_dropbox",        name: "Dropbox",              defaultAmount: 11.99, category: "Tecnologia",    accountId: "postepay", variableAmount: false }
   ];
+  let fixedExpensesConfig = loadData("mw_fixed_expenses", fixedExpensesDefault);
 
   // Regole di matching: dato un movimento, dice a quale spesa fissa appartiene
   const fixedMatchRules = {
@@ -1019,7 +1055,7 @@ if (categories.length > 0 && typeof categories[0] === 'string') {
     const capitalAlert = margin < 0 ? `<div style="margin-top:6px;padding:6px 10px;background:#ffe5e5;border-radius:6px;color:#d9534f;font-size:12px;font-weight:600;">⚠️ Saldo banca sotto la soglia intoccabile di € ${fmt(Math.abs(margin))}</div>` : "";
     const pendingFixed2 = fixedExpensesConfig.filter(cfg => !isFixedPaid(cfg.id, currentMonth)).reduce((s,cfg)=>s+cfg.defaultAmount,0);
     const kd2 = kdpData;
-    const lastRow2 = (kd2 && kd2.rows) ? kd2.rows.filter(r => (r.costo > 0 || r.vendite > 0) && r.data && r.data.slice(3) === currentMonth.slice(5) + '/' + currentMonth.slice(0,4)).slice(-1)[0] : null;
+    const lastRow2 = (kd2 && kd2.rows) ? kd2.rows.filter(r => r.costo > 0 || r.vendite > 0).slice(-1)[0] : null;
     const adsInCorso = lastRow2?.costo || 0;
     const marginNet = margin - pendingFixed2 - adsInCorso;
     document.getElementById("capital-panel").innerHTML = `
@@ -1100,7 +1136,7 @@ if (categories.length > 0 && typeof categories[0] === 'string') {
       .filter(tx => (tx.category || '').toLowerCase() === 'ads' && tx.type === "expense")
       .reduce((s, tx) => s + tx.amount, 0);
     const kd = kdpData;
-    const lastRow = (kd && kd.rows) ? kd.rows.filter(r => (r.costo > 0 || r.vendite > 0) && r.data && r.data.slice(3) === currentMonth.slice(5) + '/' + currentMonth.slice(0,4)).slice(-1)[0] : null;
+    const lastRow = (kd && kd.rows) ? kd.rows.filter(r => r.costo > 0 || r.vendite > 0).slice(-1)[0] : null;
     const inCorso = lastRow?.costo || null;
     const vendite = lastRow?.vendite || 0;
     const guadagno = lastRow?.guadagno || 0;
@@ -1118,21 +1154,96 @@ if (categories.length > 0 && typeof categories[0] === 'string') {
   // ─── RENDER SPESE FISSE ───────────────────────────────────────────────────────
   function renderFixedExpenses() {
     const list = document.getElementById("fixed-list");
-    list.innerHTML = fixedExpensesConfig.filter(cfg => !cfg.isIncome).map(cfg => {
+    const allCfg = fixedExpensesConfig;
+
+    list.innerHTML = allCfg.map(cfg => {
       const paid = isFixedPaid(cfg.id, currentMonth);
       const statusClass = paid ? "badge-green" : "badge-red";
       const statusLabel = paid ? "✅ Pagata" : "⏳ Da pagare";
+      const incomeLabel = cfg.isIncome ? '<span class="pill" style="margin-left:4px;font-size:10px;background:#e4f6e7;color:#2e7d32;">entrata</span>' : '';
+      const varLabel = cfg.variableAmount ? '<span class="pill" style="margin-left:4px;font-size:10px;">importo variabile</span>' : '';
+      const accountLabel = { bank: "Banca", postepay: "PostePay", paypal: "PayPal", cash: "Contanti", cassetta: "Cassetta" }[cfg.accountId] || cfg.accountId;
       return `
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);">
-          <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);">
+          <div style="flex:1;min-width:0;">
             <strong>${cfg.name}</strong>
             <span class="muted"> – € ${fmt(cfg.defaultAmount)}</span>
-            ${cfg.variableAmount ? '<span class="pill" style="margin-left:4px;font-size:10px;">importo variabile</span>' : ''}
+            ${varLabel}${incomeLabel}
+            <div class="muted" style="font-size:11px;margin-top:2px;">${cfg.category} · ${accountLabel}</div>
           </div>
-          <span class="badge ${statusClass}">${statusLabel}</span>
+          <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+            <span class="badge ${statusClass}">${statusLabel}</span>
+            <button class="btn-sm btn-edit" onclick="openFixedModal('${cfg.id}')" title="Modifica">✏️</button>
+            <button class="btn-sm btn-danger" onclick="deleteFixed('${cfg.id}')" title="Elimina">🗑</button>
+          </div>
         </div>
       `;
-    }).join("");
+    }).join("") + `
+      <div style="margin-top:14px;">
+        <button class="btn-primary btn-sm" onclick="openFixedModal(null)">+ Nuova spesa fissa</button>
+      </div>
+    `;
+  }
+
+  // ─── MODALE SPESE FISSE ──────────────────────────────────────────────────────
+  function openFixedModal(id) {
+    const cfg = id ? fixedExpensesConfig.find(c => c.id === id) : null;
+    const overlay = document.getElementById("fixed-modal-overlay");
+    document.getElementById("fxm-title").textContent = cfg ? "✏️ Modifica spesa fissa" : "➕ Nuova spesa fissa";
+    document.getElementById("fxm-id").value = cfg ? cfg.id : "";
+    document.getElementById("fxm-name").value = cfg ? cfg.name : "";
+    document.getElementById("fxm-amount").value = cfg ? cfg.defaultAmount : "";
+    document.getElementById("fxm-category").value = cfg ? cfg.category : "";
+    document.getElementById("fxm-account").value = cfg ? cfg.accountId : "bank";
+    document.getElementById("fxm-type").value = cfg ? (cfg.isIncome ? "income" : "expense") : "expense";
+    document.getElementById("fxm-variable").checked = cfg ? !!cfg.variableAmount : false;
+    overlay.classList.add("open");
+  }
+
+  function closeFixedModal() {
+    document.getElementById("fixed-modal-overlay").classList.remove("open");
+  }
+
+  function saveFixedModal() {
+    const id      = document.getElementById("fxm-id").value;
+    const name    = document.getElementById("fxm-name").value.trim();
+    const amount  = parseFloat(document.getElementById("fxm-amount").value);
+    const category= document.getElementById("fxm-category").value.trim();
+    const accountId = document.getElementById("fxm-account").value;
+    const isIncome  = document.getElementById("fxm-type").value === "income";
+    const variableAmount = document.getElementById("fxm-variable").checked;
+
+    if (!name || isNaN(amount) || amount <= 0 || !category) {
+      alert("Compila tutti i campi obbligatori con un importo valido.");
+      return;
+    }
+
+    if (id) {
+      // Modifica esistente
+      const idx = fixedExpensesConfig.findIndex(c => c.id === id);
+      if (idx !== -1) {
+        fixedExpensesConfig[idx] = { ...fixedExpensesConfig[idx], name, defaultAmount: amount, category, accountId, isIncome: isIncome || undefined, variableAmount };
+        if (!isIncome) delete fixedExpensesConfig[idx].isIncome;
+      }
+    } else {
+      // Nuova
+      const newId = "fx_custom_" + Date.now();
+      fixedExpensesConfig.push({ id: newId, name, defaultAmount: amount, category, accountId, variableAmount, ...(isIncome ? { isIncome: true } : {}) });
+    }
+
+    saveData("mw_fixed_expenses", fixedExpensesConfig);
+    closeFixedModal();
+    renderAll();
+  }
+
+  function deleteFixed(id) {
+    const cfg = fixedExpensesConfig.find(c => c.id === id);
+    if (!cfg) return;
+    if (!confirm(`Eliminare la spesa fissa "${cfg.name}"?\nQuesta operazione non tocca i movimenti già registrati.`)) return;
+    const idx = fixedExpensesConfig.findIndex(c => c.id === id);
+    fixedExpensesConfig.splice(idx, 1);
+    saveData("mw_fixed_expenses", fixedExpensesConfig);
+    renderAll();
   }
 
   // ─── RENDER MOVIMENTI ─────────────────────────────────────────────────────────
@@ -1330,7 +1441,7 @@ const palette = cats.map(([label]) => {
     }
 
     // Filtra solo righe con dati (costo totale > 0 o vendite > 0)
-    const rows = d.rows.filter(r => (r.costo > 0 || r.vendite > 0) && r.data && r.data.slice(3) === currentMonth.slice(5) + '/' + currentMonth.slice(0,4));
+    const rows = d.rows.filter(r => r.costo > 0 || r.vendite > 0);
     if (rows.length === 0) return;
 
     // Ultimi valori cumulativi (ultima riga con dati)
@@ -1869,7 +1980,8 @@ const APPSSCRIPTURL = APPS_SCRIPT_URL; // ← incolla qui il tuo Google Apps Scr
       userTransactions: userTransactions,
       hiddenPreloaded: hiddenPreloaded,
       categories: categories,
-      kdpData: kdpData
+      kdpData: kdpData,
+      fixedExpensesConfig: fixedExpensesConfig
     };
     try {
       const res = await fetch(JSONBIN_URL + '/' + JSONBIN_BIN_ID, {
@@ -1911,6 +2023,7 @@ const APPSSCRIPTURL = APPS_SCRIPT_URL; // ← incolla qui il tuo Google Apps Scr
       if (payload.hiddenPreloaded) { hiddenPreloaded = payload.hiddenPreloaded; saveData('mw_hidden_preloaded', hiddenPreloaded); }
       if (payload.categories) { categories = payload.categories; saveData('mwcategories', categories); }
       if (payload.kdpData) { kdpData = payload.kdpData; saveData('mwkdp', kdpData); }
+      if (payload.fixedExpensesConfig) { fixedExpensesConfig = payload.fixedExpensesConfig; saveData('mw_fixed_expenses', fixedExpensesConfig); }
       statusEl.textContent = '✅ Dati caricati correttamente!';
       statusEl.style.color = 'var(--success)';
       setTimeout(() => renderAll(), 500);
