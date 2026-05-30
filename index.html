@@ -1232,6 +1232,7 @@ if (categories.length > 0 && typeof categories[0] === 'string') {
     }
 
     saveData("mw_fixed_expenses", fixedExpensesConfig);
+    populateFixedSelect();
     closeFixedModal();
     renderAll();
   }
@@ -1858,20 +1859,27 @@ function saveEditCategory(i) {
   }
 
   // ─── FORM NUOVO MOVIMENTO ────────────────────────────────────────────────────
+  function populateFixedSelect() {
+    const sel = document.getElementById("tx-fixed");
+    const current = sel.value;
+    sel.innerHTML = '<option value="">– nessuna –</option>';
+    fixedExpensesConfig.filter(cfg => !cfg.isIncome).forEach(cfg => {
+      const opt = document.createElement("option");
+      opt.value = cfg.id;
+      opt.textContent = cfg.name;
+      sel.appendChild(opt);
+    });
+    sel.value = current;
+  }
+
   function initNewTxForm() {
     const form      = document.getElementById("new-tx-form");
     const dateInput = document.getElementById("tx-date");
     dateInput.value = new Date().toISOString().slice(0, 10);
 
     // Popola select spese fisse
-    const sel = document.getElementById("tx-fixed");
-    fixedExpensesConfig.filter(cfg => !cfg.isIncome).forEach(cfg => {
-      const opt = document.createElement("option");
-      opt.value       = cfg.id;
-      opt.textContent = cfg.name;
-      sel.appendChild(opt);
-    });
-    sel.addEventListener("change", () => {
+    populateFixedSelect();
+    document.getElementById("tx-fixed").addEventListener("change", () => {
       const fixedId = sel.value;
       if (!fixedId) return;
       const cfg = fixedExpensesConfig.find(c => c.id === fixedId);
