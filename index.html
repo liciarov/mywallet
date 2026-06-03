@@ -1448,7 +1448,16 @@ const palette = cats.map(([label]) => {
       ['kdp-spesa','kdp-vendite','kdp-guadagno','kdp-roi','kdp-royalties-mese',
        'kdp-spesa-mini','kdp-surplus','kdp-trend'].forEach(id => {
         const el = document.getElementById(id);
-        if (el) el.textContent = '—';
+        if (el) el.textContent = '—';<div style="padding:10px;background:#f0fff4;border-radius:8px;">
+  <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">💶 Aprile → pagamento giugno</div>
+  <div style="font-size:18px;font-weight:700;color:#4caf50;">€ 20,13</div>
+  <div style="font-size:10px;color:var(--muted);">a fine mese</div>
+</div>
+<div style="padding:10px;background:#f0f7ff;border-radius:8px;">
+  <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">📅 Maggio → pagamento luglio</div>
+  <div id="kdp-royalties-aprile" style="font-size:18px;font-weight:700;color:var(--accent);">€ —</div>
+  <div style="font-size:10px;color:var(--muted);">da movimenti maggio</div>
+</div>
       });
       return;
     }
