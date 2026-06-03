@@ -1066,7 +1066,7 @@ if (categories.length > 0 && typeof categories[0] === 'string') {
     const capitalAlert = margin < 0 ? `<div style="margin-top:6px;padding:6px 10px;background:#ffe5e5;border-radius:6px;color:#d9534f;font-size:12px;font-weight:600;">⚠️ Saldo banca sotto la soglia intoccabile di € ${fmt(Math.abs(margin))}</div>` : "";
     const pendingFixed2 = fixedExpensesConfig.filter(cfg => !isFixedPaid(cfg.id, currentMonth)).reduce((s,cfg)=>s+cfg.defaultAmount,0);
     const kd2 = kdpData;
-    const lastRow2 = (kd2 && kd2.rows) ? kd2.rows.filter(r => r.costo > 0 || r.vendite > 0).slice(-1)[0] : null;
+    const lastRow2 = (kd2 && kd2.rows) ? kd2.rows.filter(r => (r.costo > 0 || r.vendite > 0) && r.data && r.data.slice(3) === currentMonth.slice(5) + '/' + currentMonth.slice(0,4)).slice(-1)[0] : null;
     const adsInCorso = lastRow2?.costo || 0;
     const marginNet = margin - pendingFixed2 - adsInCorso;
     document.getElementById("capital-panel").innerHTML = `
@@ -1147,7 +1147,7 @@ if (categories.length > 0 && typeof categories[0] === 'string') {
       .filter(tx => (tx.category || '').toLowerCase() === 'ads' && tx.type === "expense")
       .reduce((s, tx) => s + tx.amount, 0);
     const kd = kdpData;
-    const lastRow = (kd && kd.rows) ? kd.rows.filter(r => r.costo > 0 || r.vendite > 0).slice(-1)[0] : null;
+    const lastRow = (kd && kd.rows) ? kd.rows.filter(r => (r.costo > 0 || r.vendite > 0) && r.data && r.data.slice(3) === currentMonth.slice(5) + '/' + currentMonth.slice(0,4)).slice(-1)[0] : null;
     const inCorso = lastRow?.costo || null;
     const vendite = lastRow?.vendite || 0;
     const guadagno = lastRow?.guadagno || 0;
@@ -1454,7 +1454,7 @@ const palette = cats.map(([label]) => {
     }
 
     // Filtra solo righe con dati (costo totale > 0 o vendite > 0)
-    const rows = d.rows.filter(r => r.costo > 0 || r.vendite > 0);
+    const rows = d.rows.filter(r => (r.costo > 0 || r.vendite > 0) && r.data && r.data.slice(3) === currentMonth.slice(5) + '/' + currentMonth.slice(0,4));
     if (rows.length === 0) return;
 
     // Ultimi valori cumulativi (ultima riga con dati)
