@@ -1491,10 +1491,10 @@ const palette = cats.map(([label]) => {
 
     // Calcola mese precedente
     const [cy, cm2] = currentMonth.split('-').map(Number);
-    const prevDate = new Date(cy, cm2 - 2, 1);
+    const prevDate = new Date(cy, cm2 - 3, 1);
     const prevMonth = prevDate.getFullYear() + '-' + String(prevDate.getMonth() + 1).padStart(2, '0');
-    const nextOfPrev = new Date(cy, cm2, 1);
-    const nextOfCurr = new Date(cy, cm2 + 1, 1);
+    const nextOfPrev = new Date(cy, cm2 - 1, 1);
+    const nextOfCurr = new Date(cy, cm2, 1);
 
     const monthNames = ['gennaio','febbraio','marzo','aprile','maggio','giugno','luglio','agosto','settembre','ottobre','novembre','dicembre'];
     const prevName = monthNames[prevDate.getMonth()];
@@ -1519,9 +1519,17 @@ const palette = cats.map(([label]) => {
     const currLabelEl = document.getElementById('kdp-curr-month-label');
     const currSubEl   = document.getElementById('kdp-curr-month-sub');
     const royAprEl    = document.getElementById('kdp-royalties-aprile');
-    if (currLabelEl) currLabelEl.textContent = '📅 ' + currMonthName.charAt(0).toUpperCase() + currMonthName.slice(1) + ' → pagamento ' + nextOfCurrName;
-    if (currSubEl)   currSubEl.textContent   = 'da movimenti ' + currMonthName;
-    if (royAprEl) royAprEl.textContent = royaltiesMese > 0 ? '€ ' + fmt(royaltiesMese) : '—';
+    const prevMonth2 = new Date(cy, cm2 - 2, 1);
+    const prevMonth2Key = prevMonth2.getFullYear() + '-' + String(prevMonth2.getMonth() + 1).padStart(2, '0');
+    const prevMonth2Name = monthNames[prevMonth2.getMonth()];
+    if (currLabelEl) currLabelEl.textContent = '📅 ' + prevMonth2Name.charAt(0).toUpperCase() + prevMonth2Name.slice(1) + ' → pagamento ' + nextOfCurrName;
+    if (currSubEl)   currSubEl.textContent   = 'da movimenti ' + prevMonth2Name;
+    let currRoyalties = ROYALTIES_HARDCODED[prevMonth2Key];
+    if (currRoyalties === undefined) {
+      const currRows = d.rows.filter(r => r.data && r.data.slice(3) === prevMonth2Key.slice(5) + '/' + prevMonth2Key.slice(0,4) && (r.costo > 0 || r.vendite > 0 || r.royalties > 0));
+      currRoyalties = currRows.length > 0 ? currRows[currRows.length - 1].royalties || 0 : null;
+    }
+    if (royAprEl) royAprEl.textContent = currRoyalties !== null ? '€ ' + fmt(currRoyalties) : '—';
 
     // Blocco 3 — ROI e autofinanziamento
     const roi = spesa > 0 ? (vendite / spesa) : 0;
