@@ -366,6 +366,11 @@
   <!-- HOME -->
   <section id="page-home" class="page active">
 
+       <!-- Carica dal cloud — scorciatoia Home -->
+    <div style="margin-bottom:10px;text-align:right;">
+      <button onclick="syncDownload()" style="background:#1565c0;color:#fff;border:none;border-radius:8px;padding:8px 18px;font-size:13px;font-weight:600;cursor:pointer;">📥 Carica dal cloud</button>
+      <div id="sync-status-home" style="font-size:11px;color:var(--muted);margin-top:4px;"></div>
+    </div> 
     <!-- Conti separati -->
     <div class="card" id="card-conti" style="margin-bottom:12px;">
       <h2>Conti e saldi</h2>
@@ -416,12 +421,7 @@
         <div id="sync-code-label" style="font-size:11px;color:var(--muted);margin-top:4px;display:none;">Inserisci questo codice sull'altro dispositivo</div>
       </div>
 
-      <div>
-        <h3>📥 Carica dati da cloud</h3>
-        <p class="muted" style="margin-bottom:8px;">Inserisci il codice generato dal dispositivo principale.</p>
-                <button style="background:#1565c0;color:#fff;border-radius:999px;border:none;padding:8px 18px;font-size:14px;font-weight:700;cursor:pointer;" onclick="syncDownload()">📥 Carica dal cloud</button>
-        <div id="sync-status" style="margin-top:10px;font-size:13px;"></div>
-      </div>
+           <div id="sync-status" style="display:none;"></div>
     </div>
   </section>
 
@@ -2091,8 +2091,10 @@ const APPSSCRIPTURL = APPS_SCRIPT_URL; // ← incolla qui il tuo Google Apps Scr
       if (payload.categories) { categories = payload.categories; saveData('mwcategories', categories); }
       if (payload.kdpData) { kdpData = payload.kdpData; saveData('mwkdp', kdpData); }
       if (payload.fixedExpensesConfig) { fixedExpensesConfig = payload.fixedExpensesConfig; saveData('mw_fixed_expenses', fixedExpensesConfig); }
-      statusEl.textContent = '✅ Dati caricati correttamente!';
+            statusEl.textContent = '✅ Dati caricati correttamente!';
       statusEl.style.color = 'var(--success)';
+      const homeStatus = document.getElementById('sync-status-home');
+      if (homeStatus) { homeStatus.textContent = '✅ Caricato'; homeStatus.style.color = 'var(--success)'; setTimeout(() => homeStatus.textContent = '', 4000); }
       setTimeout(() => renderAll(), 500);
     } catch(e) {
       statusEl.textContent = '❌ Errore di connessione. Riprova.';
