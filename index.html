@@ -5,6 +5,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>MyWallet</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
     :root {
       --bg: #f4f4f6;
@@ -357,7 +358,8 @@
     <button class="tab-btn" data-page="tx">Movimenti</button>    
     <button class="tab-btn" data-page="fixed">Spese fisse</button>
     <button class="tab-btn" data-page="categories">Categorie</button>
-    <button class="tab-btn" data-page="kdp">KDP Analytics</button>    
+    <button class="tab-btn" data-page="kdp">KDP Analytics</button>
+    <button class="tab-btn" data-page="storico">📈 Storico</button>
   </nav>
 </header>
 
@@ -366,11 +368,12 @@
   <!-- HOME -->
   <section id="page-home" class="page active">
 
-       <!-- Carica dal cloud — scorciatoia Home -->
-    <div style="margin-bottom:10px;text-align:right;">
-      <button onclick="syncDownload()" style="background:#1565c0;color:#fff;border:none;border-radius:8px;padding:8px 18px;font-size:13px;font-weight:600;cursor:pointer;">📥 Carica dal cloud</button>
-      <div id="sync-status-home" style="font-size:11px;color:var(--muted);margin-top:4px;"></div>
-    </div> 
+    <!-- Carica dal cloud: home shortcut -->
+    <div style="display:flex;justify-content:flex-end;margin-bottom:10px;align-items:center;gap:10px;">
+      <div id="sync-status-home" style="font-size:13px;"></div>
+      <button onclick="syncDownload()" style="background:#1565c0;color:#fff;border:none;border-radius:999px;padding:7px 16px;font-size:13px;font-weight:700;cursor:pointer;">📥 Carica dal cloud</button>
+    </div>
+
     <!-- Conti separati -->
     <div class="card" id="card-conti" style="margin-bottom:12px;">
       <h2>Conti e saldi</h2>
@@ -421,7 +424,25 @@
         <div id="sync-code-label" style="font-size:11px;color:var(--muted);margin-top:4px;display:none;">Inserisci questo codice sull'altro dispositivo</div>
       </div>
 
-           <div id="sync-status" style="display:none;"></div>
+      <div id="sync-status" style="display:none;font-size:13px;"></div>
+    </div>
+  </section>
+
+  <!-- STORICO -->
+  <section id="page-storico" class="page">
+    <div class="card" style="margin-bottom:12px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+        <h2 style="margin:0;">📈 Storico saldi</h2>
+        <span class="muted" style="font-size:12px;">Conto bancario · aprile 2026 → oggi</span>
+      </div>
+      <div style="position:relative;height:240px;margin-top:12px;">
+        <canvas id="storico-chart"></canvas>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-bottom:12px;">Dettaglio mensile</h2>
+      <div id="storico-table"></div>
     </div>
   </section>
 
@@ -2078,7 +2099,12 @@ const APPSSCRIPTURL = APPS_SCRIPT_URL; // ← incolla qui il tuo Google Apps Scr
 
   async function syncDownload() {
     const statusEl = document.getElementById('sync-status');
-    statusEl.textContent = '⏳ Caricamento...';
+    const statusHome = document.getElementById('sync-status-home');
+    function setStatus(msg, color) {
+      if (statusEl) { statusEl.textContent = msg; statusEl.style.color = color||''; }
+      if (statusHome) { statusHome.textContent = msg; statusHome.style.color = color||''; }
+    }
+    setStatus('⏳ Caricamento...');
     try {
       const res = await fetch(JSONBIN_URL + '/' + JSONBIN_BIN_ID + '/latest', {
         headers: { 'X-Master-Key': JSONBIN_KEY }
@@ -2091,14 +2117,10 @@ const APPSSCRIPTURL = APPS_SCRIPT_URL; // ← incolla qui il tuo Google Apps Scr
       if (payload.categories) { categories = payload.categories; saveData('mwcategories', categories); }
       if (payload.kdpData) { kdpData = payload.kdpData; saveData('mwkdp', kdpData); }
       if (payload.fixedExpensesConfig) { fixedExpensesConfig = payload.fixedExpensesConfig; saveData('mw_fixed_expenses', fixedExpensesConfig); }
-            statusEl.textContent = '✅ Dati caricati correttamente!';
-      statusEl.style.color = 'var(--success)';
-      const homeStatus = document.getElementById('sync-status-home');
-      if (homeStatus) { homeStatus.textContent = '✅ Caricato'; homeStatus.style.color = 'var(--success)'; setTimeout(() => homeStatus.textContent = '', 4000); }
-      setTimeout(() => renderAll(), 500);
+      setStatus('✅ Dati caricati correttamente!', 'var(--success)');
+      setTimeout(() => { renderAll(); if(statusHome) setTimeout(()=>statusHome.textContent='', 4000); }, 500);
     } catch(e) {
-      statusEl.textContent = '❌ Errore di connessione. Riprova.';
-      statusEl.style.color = 'var(--danger)';
+      setStatus('❌ Errore di connessione. Riprova.', 'var(--danger)');
       console.warn(e);
     }
   }
@@ -2106,7 +2128,7 @@ const APPSSCRIPTURL = APPS_SCRIPT_URL; // ← incolla qui il tuo Google Apps Scr
   // ─── TABS ────────────────────────────────────────────────────────────────────
   function initTabs() {
     const buttons = document.querySelectorAll(".tab-btn");
-    const pageIds = { home: "page-home", new: "page-new", tx: "page-tx", fixed: "page-fixed", categories: "page-categories", kdp: "page-kdp", sync: "page-sync" };
+    const pageIds = { home: "page-home", new: "page-new", tx: "page-tx", fixed: "page-fixed", categories: "page-categories", kdp: "page-kdp", sync: "page-sync", storico: "page-storico" };
     buttons.forEach(btn => {
       btn.addEventListener("click", () => {
         buttons.forEach(b => b.classList.remove("active"));
@@ -2117,6 +2139,124 @@ const APPSSCRIPTURL = APPS_SCRIPT_URL; // ← incolla qui il tuo Google Apps Scr
         });
       });
     });
+  }
+
+
+  // ─── STORICO ─────────────────────────────────────────────────────────────────
+  let _storicoChart = null;
+
+  function renderStorico() {
+    // Mesi da aprile 2026 ad oggi
+    const startYear = 2026, startMonth = 4;
+    const now = new Date();
+    const endYear = now.getFullYear(), endMonth = now.getMonth() + 1;
+
+    const months = [];
+    let y = startYear, m = startMonth;
+    while (y < endYear || (y === endYear && m <= endMonth)) {
+      months.push(`${y}-${String(m).padStart(2,'0')}`);
+      m++; if (m > 12) { m = 1; y++; }
+    }
+
+    // Calcola saldi mensili a ritroso dal saldo bancario reale attuale
+    // Così il dato finale è sempre ancorato alla realtà
+    const balances = new Array(months.length);
+    let running = accounts.bank.balance;
+    for (let i = months.length - 1; i >= 0; i--) {
+      balances[i] = parseFloat(running.toFixed(2));
+      if (i > 0) {
+        // Togli il netto delle userTx del mese i per ottenere il saldo di fine mese i-1
+        const txs = userTransactions.filter(tx => tx.date.startsWith(months[i]) && tx.accountId === 'bank');
+        const inc = txs.filter(tx => tx.type === 'income').reduce((s, tx) => s + tx.amount, 0);
+        const exp = txs.filter(tx => tx.type === 'expense').reduce((s, tx) => s + tx.amount, 0);
+        running = running - inc + exp;
+      }
+    }
+
+    const names = ['','Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic'];
+    const labels = months.map(mon => {
+      const [y, mo] = mon.split('-');
+      return names[parseInt(mo)] + ' ' + y;
+    });
+
+    // ── Chart ──
+    const canvas = document.getElementById('storico-chart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (_storicoChart) { _storicoChart.destroy(); }
+
+    // Colore punti: confronta saldo con mese precedente
+    const pointColors = balances.map((b, i) => {
+      if (i === 0) return '#5b7cfa';
+      return b >= balances[i-1] ? '#4caf50' : '#d9534f';
+    });
+
+    _storicoChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Saldo bancario',
+          data: balances,
+          borderColor: '#5b7cfa',
+          backgroundColor: 'rgba(91,124,250,0.08)',
+          borderWidth: 2.5,
+          pointBackgroundColor: pointColors,
+          pointRadius: 5,
+          pointHoverRadius: 7,
+          fill: true,
+          tension: 0.35,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: ctx => '€ ' + ctx.parsed.y.toLocaleString('it-IT', {minimumFractionDigits:2})
+            }
+          }
+        },
+        scales: {
+          x: { grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { font: { size: 12 } } },
+          y: {
+            grid: { color: 'rgba(0,0,0,0.05)' },
+            ticks: {
+              font: { size: 12 },
+              callback: v => '€ ' + v.toLocaleString('it-IT')
+            }
+          }
+        }
+      }
+    });
+
+    // ── Tabella ── solo mese e saldo fine mese
+    const tableDiv = document.getElementById('storico-table');
+    if (!tableDiv) return;
+
+    const currentMon = `${endYear}-${String(endMonth).padStart(2,'0')}`;
+    let rows = '';
+    [...months].reverse().forEach((mon, ri) => {
+      const i = months.length - 1 - ri;
+      const isCurrent = mon === currentMon;
+      const isUp = i > 0 && balances[i] >= balances[i-1];
+      const arrow = i === 0 ? '' : (isUp ? ' <span style="color:#4caf50;">▲</span>' : ' <span style="color:#d9534f;">▼</span>');
+      rows += `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 4px;border-bottom:1px solid var(--border);${isCurrent?'font-weight:700;':''}">
+          <div style="font-size:13px;">${labels[i]}${arrow}${isCurrent?' <span style="font-size:10px;background:var(--accent-soft);color:var(--accent);padding:1px 6px;border-radius:999px;font-weight:400;margin-left:6px;">in corso</span>':''}</div>
+          <div style="font-size:14px;font-weight:700;">€ ${balances[i].toLocaleString('it-IT',{minimumFractionDigits:2})}</div>
+        </div>`;
+    });
+
+    tableDiv.innerHTML = `
+      <div style="display:flex;justify-content:space-between;padding-bottom:8px;border-bottom:2px solid var(--border);">
+        <div class="muted" style="font-size:11px;">Mese</div>
+        <div class="muted" style="font-size:11px;">Saldo bancario fine mese</div>
+      </div>
+      ${rows}
+    `;
   }
 
   // ─── PERSIST & RENDER ALL ────────────────────────────────────────────────────
@@ -2137,6 +2277,7 @@ const APPSSCRIPTURL = APPS_SCRIPT_URL; // ← incolla qui il tuo Google Apps Scr
   renderKdp();
   renderCategoriesPage();
   renderCategoryDatalist();
+  renderStorico();
 }
 
   // ─── INIT ────────────────────────────────────────────────────────────────────
