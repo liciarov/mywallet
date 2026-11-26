@@ -424,6 +424,12 @@
         <div id="sync-code-label" style="font-size:11px;color:var(--muted);margin-top:4px;display:none;">Inserisci questo codice sull'altro dispositivo</div>
       </div>
 
+      <div style="margin-bottom:20px;">
+        <h3>🔑 Chiave di sincronizzazione</h3>
+        <p class="muted" id="sync-key-info" style="margin-bottom:8px;"></p>
+        <button style="background:#455a64;color:#fff;border-radius:999px;border:none;padding:8px 18px;font-size:14px;font-weight:700;cursor:pointer;" onclick="askSyncKey(true)">🔑 Cambia chiave di sincronizzazione</button>
+      </div>
+
       <div id="sync-status" style="display:none;font-size:13px;"></div>
     </div>
   </section>
@@ -2053,7 +2059,7 @@ const APPSSCRIPTURL = APPS_SCRIPT_URL; // ← incolla qui il tuo Google Apps Scr
     fetchKdpFromSheets();
   }
 
-  const JSONBIN_KEY = '$2a$10$U3K90VB.FCK/PlZV9S.OFOIdwSAoc8rnLEz6M/x8unc1wTza5rCmO';
+  const JSONBIN_KEY_STORAGE = 'mw_jsonbin_key'; // la chiave sta solo nel browser, mai nel codice
   const JSONBIN_URL = 'https://api.jsonbin.io/v3/b';
 
   function generateCode() {
@@ -2061,6 +2067,60 @@ const APPSSCRIPTURL = APPS_SCRIPT_URL; // ← incolla qui il tuo Google Apps Scr
   }
 
   const JSONBIN_BIN_ID = '69fd915fc0954111d8f347bf';
+
+  // ─── CHIAVE DI SINCRONIZZAZIONE ──────────────────────────────────────────────
+  function getSyncKey() {
+    try { return (localStorage.getItem(JSONBIN_KEY_STORAGE) || '').trim(); } catch(e) { return ''; }
+  }
+
+  function showSyncWarning(msg) {
+    ['sync-status', 'sync-status-home'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) { el.textContent = msg; el.style.color = 'var(--danger)'; el.style.display = 'block'; }
+    });
+    alert(msg);
+  }
+
+  function updateSyncKeyInfo() {
+    const el = document.getElementById('sync-key-info');
+    if (el) el.textContent = getSyncKey()
+      ? 'Chiave impostata su questo dispositivo.'
+      : 'Nessuna chiave su questo dispositivo: la sincronizzazione con il cloud è disattivata.';
+  }
+
+  // Verifica in sola lettura: non modifica niente, né in locale né nel cloud
+  async function checkSyncKey(key) {
+    try {
+      const res = await fetch(JSONBIN_URL + '/' + JSONBIN_BIN_ID + '/latest', {
+        headers: { 'X-Master-Key': key }
+      });
+      if (res.ok) return 'ok';
+      if (res.status === 401 || res.status === 403) return 'wrong';
+      return 'unknown';
+    } catch(e) { return 'unknown'; }
+  }
+
+  async function askSyncKey(isChange) {
+    const msg = isChange
+      ? 'Incolla la nuova chiave di sincronizzazione (X-Master-Key di JSONbin):'
+      : 'Configurazione di questo dispositivo: incolla la chiave di sincronizzazione (X-Master-Key di JSONbin).\nSenza chiave l\'app funziona, ma non si sincronizza con il cloud.';
+    const input = prompt(msg, '');
+    if (input === null) { updateSyncKeyInfo(); return false; }
+    const key = input.trim();
+    if (!key) { showSyncWarning('⚠️ Nessuna chiave inserita: la sincronizzazione con il cloud resta disattivata.'); updateSyncKeyInfo(); return false; }
+    const esito = await checkSyncKey(key);
+    if (esito === 'wrong') {
+      showSyncWarning('⚠️ Chiave non valida: non è stata salvata. Nessun dato è stato modificato.');
+      updateSyncKeyInfo();
+      return false;
+    }
+    try { localStorage.setItem(JSONBIN_KEY_STORAGE, key); } catch(e) {}
+    updateSyncKeyInfo();
+    alert(esito === 'ok'
+      ? '✅ Chiave salvata e verificata.'
+      : '✅ Chiave salvata, ma ora non è stato possibile verificarla: controlla la connessione.');
+    return true;
+  }
 
   async function syncUpload() {
     const payload = {
@@ -2071,15 +2131,28 @@ const APPSSCRIPTURL = APPS_SCRIPT_URL; // ← incolla qui il tuo Google Apps Scr
       kdpData: kdpData,
       fixedExpensesConfig: fixedExpensesConfig
     };
+    const key = getSyncKey();
+    if (!key) {
+      showSyncWarning('⚠️ Chiave di sincronizzazione mancante: niente è stato salvato sul cloud. Impostala con "Cambia chiave di sincronizzazione".');
+      return;
+    }
     try {
       const res = await fetch(JSONBIN_URL + '/' + JSONBIN_BIN_ID, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'X-Master-Key': JSONBIN_KEY
+          'X-Master-Key': key
         },
         body: JSON.stringify(payload)
       });
+      if (res.status === 401 || res.status === 403) {
+        showSyncWarning('⚠️ Chiave di sincronizzazione non valida: il cloud non è stato modificato. Correggila con "Cambia chiave di sincronizzazione".');
+        return;
+      }
+      if (!res.ok) {
+        showSyncWarning('⚠️ Errore del cloud (' + res.status + '): niente è stato salvato.');
+        return;
+      }
       const json = await res.json();
       if (json.metadata) {
         document.getElementById('sync-code-out').textContent = '✅ Salvato!';
@@ -2101,16 +2174,33 @@ const APPSSCRIPTURL = APPS_SCRIPT_URL; // ← incolla qui il tuo Google Apps Scr
     const statusEl = document.getElementById('sync-status');
     const statusHome = document.getElementById('sync-status-home');
     function setStatus(msg, color) {
-      if (statusEl) { statusEl.textContent = msg; statusEl.style.color = color||''; }
+      if (statusEl) { statusEl.textContent = msg; statusEl.style.color = color||''; statusEl.style.display = 'block'; }
       if (statusHome) { statusHome.textContent = msg; statusHome.style.color = color||''; }
+    }
+    const key = getSyncKey();
+    if (!key) {
+      showSyncWarning('⚠️ Chiave di sincronizzazione mancante: i dati di questo dispositivo non sono stati toccati. Impostala con "Cambia chiave di sincronizzazione".');
+      return;
     }
     setStatus('⏳ Caricamento...');
     try {
       const res = await fetch(JSONBIN_URL + '/' + JSONBIN_BIN_ID + '/latest', {
-        headers: { 'X-Master-Key': JSONBIN_KEY }
+        headers: { 'X-Master-Key': key }
       });
+      if (res.status === 401 || res.status === 403) {
+        showSyncWarning('⚠️ Chiave di sincronizzazione non valida: i dati di questo dispositivo non sono stati toccati. Correggila con "Cambia chiave di sincronizzazione".');
+        return;
+      }
+      if (!res.ok) {
+        showSyncWarning('⚠️ Errore del cloud (' + res.status + '): i dati di questo dispositivo non sono stati toccati.');
+        return;
+      }
       const data = await res.json();
-      const payload = data.record || data;
+      const payload = (data && data.record) || data;
+      if (!payload || typeof payload !== 'object' || !payload.accounts || !Array.isArray(payload.userTransactions)) {
+        showSyncWarning('⚠️ I dati ricevuti dal cloud non sono validi: i dati di questo dispositivo non sono stati toccati.');
+        return;
+      }
       if (payload.accounts) { Object.assign(accounts, payload.accounts); saveData('mw_accounts', accounts); }
       if (payload.userTransactions) { userTransactions = payload.userTransactions; saveData('mw_user_transactions', userTransactions); }
       if (payload.hiddenPreloaded) { hiddenPreloaded = payload.hiddenPreloaded; saveData('mw_hidden_preloaded', hiddenPreloaded); }
@@ -2295,6 +2385,9 @@ const APPSSCRIPTURL = APPS_SCRIPT_URL; // ← incolla qui il tuo Google Apps Scr
 const statusEl = document.getElementById('sheets-status');
 fetchKdpFromSheets();
 renderCategoryDatalist();
+// Chiave di sincronizzazione: richiesta al primo avvio su questo dispositivo
+updateSyncKeyInfo();
+if (!getSyncKey()) setTimeout(() => askSyncKey(false), 600);
 autoInsertPensione();
 renderAll();
 </script>
